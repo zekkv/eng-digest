@@ -22,6 +22,7 @@ The source list starts from seeds in `config.ts`. It grows from successful picks
 │       └── digest-daily.yml  # Runs `bun run digest:daily` at 07:00 SGT (23:00 UTC)
 ├── docs/
 │   ├── ARCHITECTURE.md   # This file
+│   ├── DEPLOYMENT.md     # Vercel and GitHub Actions deployment
 │   ├── DESIGN.md         # Visual system notes
 │   └── DEVELOPMENT.md    # Local setup, scripts, and testing guide
 ├── AGENTS.md             # Developer guide for coding agents
