@@ -1,10 +1,8 @@
-import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import tailwindcss from "@tailwindcss/vite";
-import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
 import viteReact from "@vitejs/plugin-react";
 import { nitro } from "nitro/vite";
-import { defineConfig, createLogger, loadEnv } from "vite";
+import { defineConfig, createLogger } from "vite";
 
 const logger = createLogger();
 const originalWarn = logger.warn.bind(logger);
@@ -15,23 +13,25 @@ logger.warn = (msg, options) => {
 };
 
 const config = defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
-  const isDev = mode === "development";
-
   return {
     customLogger: logger,
-    optimizeDeps: {
-      exclude: ["bun"],
-    },
-    ssr: {
-      external: ["bun"],
+    server: {
+      watch: {
+        // build/test artifacts rewritten during dev must not trigger reloads
+        ignored: [
+          "**/coverage/**",
+          "**/.output/**",
+          "**/.tanstack/**",
+          "**/playwright-report/**",
+          "**/test-results/**",
+        ],
+      },
     },
     plugins: [
-      ...(isDev ? [devtools()] : []),
       nitro({
-        preset: "bun",
-        rollupConfig: { external: ["bun", /^bun:/] },
-        traceDeps: [/^@sentry\//, /^@logtape\//],
+        // `bun run build` stays on the bun preset (local dev and the daily script
+        // keep the filesystem store); `bun run build:vercel` switches to Vercel.
+        preset: mode === "vercel" ? "vercel" : "bun",
         routeRules: {
           "/assets/**": {
             headers: {
@@ -42,15 +42,6 @@ const config = defineConfig(({ mode }) => {
       }),
       tailwindcss(),
       tanstackStart(),
-      ...(env.SENTRY_AUTH_TOKEN && env.SENTRY_AUTH_TOKEN !== "your-sentry-auth-token"
-        ? [
-            sentryTanstackStart({
-              org: env.VITE_SENTRY_ORG,
-              project: env.VITE_SENTRY_PROJECT,
-              authToken: env.SENTRY_AUTH_TOKEN,
-            }),
-          ]
-        : []),
       viteReact(),
     ],
   };

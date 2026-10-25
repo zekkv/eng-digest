@@ -1,12 +1,14 @@
 @import "tailwindcss";
 @source './**/*.{ts,tsx}';
 
-@import "tw-animate-css";
-
 @import "shadcn/tailwind.css";
 
-@import "@fontsource-variable/schibsted-grotesk";
-@import "@fontsource-variable/jetbrains-mono";
+@import "@fontsource/zilla-slab/600.css";
+@import "@fontsource/zilla-slab/700.css";
+@import "@fontsource-variable/literata";
+@import "@fontsource-variable/recursive/casl.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -17,28 +19,22 @@
   --card-foreground: oklch(0.16 0 0);
   --primary: oklch(0.16 0 0);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.965 0 0);
-  --secondary-foreground: oklch(0.16 0 0);
   --muted: oklch(0.965 0 0);
   --muted-foreground: oklch(0.52 0 0);
-  --accent: oklch(0.965 0 0);
-  --accent-foreground: oklch(0.16 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.99 0.01 240);
   --border: oklch(0.92 0 0);
   --input: oklch(0.92 0 0);
   --ring: oklch(0.556 0 0);
   --popover: var(--card);
   --popover-foreground: var(--card-foreground);
-  --sidebar: var(--secondary);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--muted);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--ring);
   --radius: 0.5rem;
+  /* Proof palette. Cool paper, never cream. Blue marks and one red. */
+  --proof: #0f1418;
+  --paper: #f1f3f4;
+  --soft: #5c646e;
+  --editor: #1b4ac4;
+  --wash: #e7ecf7;
+  --pencil: #ae3a24;
 }
 
 .dark {
@@ -48,27 +44,21 @@
   --card-foreground: oklch(0.96 0 0);
   --primary: oklch(0.96 0 0);
   --primary-foreground: oklch(0.16 0 0);
-  --secondary: oklch(0.235 0 0);
-  --secondary-foreground: oklch(0.96 0 0);
   --muted: oklch(0.235 0 0);
   --muted-foreground: oklch(0.68 0 0);
-  --accent: oklch(0.235 0 0);
-  --accent-foreground: oklch(0.96 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.98 0.01 240);
   --border: oklch(1 0 0 / 12%);
   --input: oklch(1 0 0 / 16%);
   --ring: oklch(0.68 0 0);
   --popover: var(--card);
   --popover-foreground: var(--card-foreground);
-  --sidebar: var(--card);
-  --sidebar-foreground: var(--foreground);
-  --sidebar-primary: var(--primary);
-  --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: var(--muted);
-  --sidebar-accent-foreground: var(--foreground);
-  --sidebar-border: var(--border);
-  --sidebar-ring: var(--ring);
+  /* Dark proof. Graphite ground and paper text. Marks stay blue and legible. */
+  --proof: #edeff1;
+  --paper: #141a1f;
+  --soft: #9aa3ad;
+  --editor: #8fabff;
+  --wash: #1e2a4a;
+  --pencil: #de8266;
 }
 
 @theme inline {
@@ -78,41 +68,30 @@
   --color-card-foreground: var(--card-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-proof: var(--proof);
+  --color-paper: var(--paper);
+  --color-soft: var(--soft);
+  --color-editor: var(--editor);
+  --color-wash: var(--wash);
+  --color-pencil: var(--pencil);
   --tracking-caps: 0.2em;
-  --leading-display: 1.02;
-  --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
-  --radius-sm: calc(var(--radius) - 4px);
+  --font-sans: "Literata Variable", Georgia, serif;
+  --font-heading: "Zilla Slab", Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-notes: "Recursive Variable", "IBM Plex Mono", ui-monospace, monospace;
   --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
 }
 
 html,
-body,
-#app {
+body {
   min-height: 100%;
 }
 
@@ -122,12 +101,69 @@ body,
   }
 
   body {
-    @apply antialiased bg-background text-foreground selection:bg-foreground selection:text-background;
+    @apply bg-paper font-sans text-proof antialiased selection:bg-editor selection:text-paper;
+    font-optical-sizing: auto;
+    /* Theme changes ease instead of snapping (§14, abrupt brightness jumps). */
+    transition:
+      background-color 300ms ease,
+      color 300ms ease;
   }
 
   html {
     @apply font-sans;
   }
+
+  :where(button, a, summary):focus-visible {
+    outline: 2px solid var(--editor);
+    outline-offset: 2px;
+  }
+
+  /* Small UI text reads better with slight positive tracking (§15). */
+  .font-notes {
+    letter-spacing: 0.01em;
+    font-variation-settings: "CASL" 1;
+  }
+}
+
+/* Scrollbars: a thin soft thumb that turns editor blue on hover. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--soft) transparent;
+  scrollbar-color: color-mix(in oklab, var(--soft) 40%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-color: var(--soft);
+  background-color: color-mix(in oklab, var(--soft) 38%, transparent);
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--editor);
+  background-color: color-mix(in oklab, var(--editor) 72%, transparent);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--editor);
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -138,5 +174,41 @@ body,
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     opacity: 1 !important;
+  }
+}
+
+/* Loading text. A token-gradient sweep across muted ink. It is the one allowed animation.
+   The reduced-motion block above freezes it. The AI Elements registry shimmer needs
+   `motion` for the same effect. This needs nothing. */
+@keyframes shimmer-sweep {
+  from {
+    background-position: 100% center;
+  }
+
+  to {
+    background-position: 0% center;
+  }
+}
+
+.shimmer {
+  color: transparent;
+  background-image:
+    linear-gradient(90deg, transparent calc(50% - 3em), var(--paper), transparent calc(50% + 3em)),
+    linear-gradient(var(--soft), var(--soft));
+  background-repeat: no-repeat;
+  background-size:
+    250% 100%,
+    auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer-sweep 2s linear infinite;
+}
+
+/* Translucent chrome becomes a solid surface when less transparency is requested (§14). */
+@media (prefers-reduced-transparency: reduce) {
+  body > header {
+    background-color: var(--paper);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 }

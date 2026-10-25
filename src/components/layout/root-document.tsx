@@ -1,32 +1,37 @@
 import { HeadContent, Scripts } from "@tanstack/react-router";
+import { ThemeProvider, useTheme } from "next-themes";
 import { useEffect } from "react";
 import type { ReactNode } from "react";
 
-import { ThemeProvider } from "#/components/providers/theme-provider";
 import { Toaster } from "#/components/ui/sonner";
 
 /**
- * The HTML document every render is wrapped in — the root route's shell and the one the error
- * and not-found boundaries reuse, since a boundary replaces the whole tree beneath `<html>`.
- * It lives beside the header rather than in `src/routes/__root.tsx`, which keeps that file to
- * routing.
+ * The router removes duplicate head tags by name. It scans back-to-front, which dropped
+ * one tag of a light/dark theme-color pair. So the app uses one static meta tag plus this sync instead.
  */
-export function RootDocument({ children, meta }: { children: ReactNode; meta?: ReactNode }) {
-  // Runs only after React attaches, never during SSR, so E2E specs can wait on a real hydration
-  // signal (`body[data-hydrated]`) instead of network silence, which can settle before handlers
-  // are live under the dev server's on-demand transforms.
+function ThemeColorSync() {
+  const { resolvedTheme } = useTheme();
   useEffect(() => {
-    document.body.dataset.hydrated = "true";
-  }, []);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", resolvedTheme === "dark" ? "#141A1F" : "#F1F3F4");
+  }, [resolvedTheme]);
+  return null;
+}
 
+/**
+ * The HTML document that the root route renders. It lives beside the header, not in
+ * `src/routes/__root.tsx`. This keeps that file to routing only.
+ */
+export function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
-        {meta}
       </head>
       <body>
-        <ThemeProvider defaultTheme="light" storageKey="template-theme">
+        <ThemeProvider attribute="class" defaultTheme="light">
+          <ThemeColorSync />
           {children}
         </ThemeProvider>
         <Scripts />

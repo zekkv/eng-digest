@@ -1,0 +1,80 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_sha || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Vercel
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check Vercel secrets
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name secret is not set"
+              exit 1
+            fi
+          done
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - name: Install dependencies
+        env:
+          LEFTHOOK: "0"
+        run: bun install --frozen-lockfile
+      - name: Pull Vercel project settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: bunx vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+      - name: Check Vercel runtime env
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          keys=$(curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID" \
+            | jq -r '(.env // [])[] | select((.target | tostring) | contains("production")) | .key')
+          for name in OPENROUTER_API_KEY TAVILY_API_KEY; do
+            if ! grep -qx "$name" <<< "$keys"; then
+              echo "::error::$name is not set in the Vercel production environment"
+              exit 1
+            fi
+          done
+          if ! grep -Eqx 'KV_REST_API_URL|UPSTASH_REDIS_REST_URL' <<< "$keys"; then
+            echo "::error::the Upstash URL is not set in the Vercel production environment"
+            exit 1
+          fi
+          if ! grep -Eqx 'KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN' <<< "$keys"; then
+            echo "::error::the Upstash token is not set in the Vercel production environment"
+            exit 1
+          fi
+      - name: Build for Vercel
+        run: bun run build:vercel
+      - name: Deploy to production
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: bunx vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"

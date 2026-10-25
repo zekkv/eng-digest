@@ -1,125 +1,67 @@
 # Architecture
 
-This project is opinionated towards [Bun](https://bun.sh/) and renders on the server with TanStack Start and Nitro.
+This app builds a daily engineering digest. It collects RSS/Atom feeds, sitemap and HTML index pages for blogs without feeds, and the Hacker News front page. An LLM picks and summarizes the posts. The source list starts from seeds in config and grows from successful picks; it is stored in the cache. The app renders on the server with TanStack Start and Nitro on Bun. There is no database and no authentication. The cache is a JSON file under `data/`.
 
 ## Core Stack
 
-- **Framework**: [TanStack Start](https://tanstack.com/start) — full-stack React with TanStack Router, server functions, and SSR.
-- **Server**: [Nitro](https://nitro.unjs.io/) — handles server-side logic and deployment presets.
-- **ORM & Database**: [Drizzle ORM](https://orm.drizzle.team/) with Bun's native SQL driver (`bun:sql` / `drizzle-orm/bun-sql`).
-- **Auth**: [Better Auth](https://better-auth.com/) — email + password, email OTP, passkeys, and optional Google OAuth. Rate limited at the Better Auth layer (20 req/60 s).
-- **Theme**: [next-themes](https://github.com/pacocoursey/next-themes) — class-based theme management on `html` with a mounted client toggle.
+- **Framework**: The framework is [TanStack Start](https://tanstack.com/start). It provides full-stack React with TanStack Router, server functions, and SSR.
+- **Server**: The server is [Nitro](https://nitro.unjs.io/). It runs the server-side logic and supports deployment presets.
+- **Digest backend**: The digest backend reads RSS/Atom feeds with [rss-parser](https://github.com/briancmcdonald/rss-parser). It reads sitemaps and HTML index pages for blogs without feeds. It extracts page text with [Tavily](https://tavily.com/). It reads popular stories from the [Hacker News Algolia API](https://hn.algolia.com/api). It picks and summarizes with [OpenRouter](https://openrouter.ai/).
+- **Theme**: The theme uses [next-themes](https://github.com/pacocoursey/next-themes). It sets a class on `html`. A client toggle switches the theme after mount.
 
 ## Directory Structure
 
 ```
 .
+├── .github/
+│   └── workflows/
+│       ├── ci.yml            # Checks, then deploys PR previews
+│       ├── cd.yml            # Deploys after CI succeeds on `main`
+│       └── digest-daily.yml  # Runs `bun run digest:daily` at 07:00 SGT (23:00 UTC)
 ├── docs/
-│   ├── ADDING-A-FEATURE.md # The schema-to-tests sequence for a new feature
 │   ├── ARCHITECTURE.md   # This file
-│   ├── CHANGELOG.md      # Release history
-│   ├── CONTRIBUTING.md   # Branch, commit, and test conventions
-│   ├── DEPLOYMENT.md     # Hosting options and platform config
 │   ├── DESIGN.md         # Visual system notes
-│   └── DEVELOPMENT.md    # Local setup, scripts, database, and testing guide
+│   └── DEVELOPMENT.md    # Local setup, scripts, and testing guide
 ├── AGENTS.md             # Developer guide for agents (also CLAUDE.md)
 ├── CLAUDE.md             # Claude Code entry point — includes AGENTS.md
+├── data/
+│   └── cache.json        # Digest cache: articles, summaries, feed statuses
+├── scripts/
+│   └── digest-daily.ts   # Daily job entrypoint (`--dry-run`, `--force`)
 ├── src/
 │   ├── components/
-│   │   ├── layout/       # Header and shell layout
-│   │   ├── pages/        # Route-level page compositions
-│   │   ├── providers/    # Client providers (theme)
-│   │   └── ui/           # Reusable UI primitives
-│   ├── db/               # Drizzle schema, client, and migrations
-│   │   ├── drizzle/      # Generated SQL migrations (drizzle-kit)
-│   │   ├── schema.ts     # notes table (with userId FK)
-│   │   └── auth-schema.ts# Better Auth tables
+│   │   ├── layout/       # Header and document shell
+│   │   ├── pages/        # Error and not-found boundaries
+│   │   └── ui/           # Reusable UI primitives (button, sheet, skeleton, sonner)
 │   ├── features/
-│   │   ├── auth/         # Session/account server fns, query options, login/signup/OTP/reset forms
-│   │   ├── emails/       # Email templates
-│   │   ├── notes/        # Notes schema, server functions, and records.server
-│   │   └── uploads/      # Upload schema, server function, and presign.server
-│   ├── lib/              # Shared integrations and utilities
-│   │   ├── auth-client.ts    # Better Auth React client
-│   │   ├── auth.server.ts    # Better Auth server config
-│   │   ├── logger.ts         # LogTape app logger and sink config
-│   │   ├── mailer.server.ts  # Resend email sender (lazy init, optional)
-│   │   ├── redis.server.ts   # Bun-native Redis client (optional)
-│   │   ├── seo.ts            # SEO metadata, OpenGraph, structured data, crawler formats
-│   │   ├── storage.server.ts # Bun-native S3-compatible upload client (optional)
-│   │   └── utils.ts
-│   ├── routes/           # TanStack Router routes and API handlers
+│   │   └── digest/       # The whole feature: config, clients, pipeline, store, server fns, view
+│   ├── routes/           # TanStack Router routes
 │   │   ├── __root.tsx    # App shell
-│   │   ├── _authenticated.tsx # Pathless layout route guarding authenticated pages
-│   │   ├── _authenticated/
-│   │   │   ├── dashboard.tsx # Protected route — notes CRUD, upload widget
-│   │   │   └── settings.tsx  # Protected route — profile, providers, passkeys, delete account
-│   │   ├── index.tsx     # Landing page
-│   │   ├── login.tsx     # Auth route — redirects signed-in users
-│   │   ├── signup.tsx    # Auth route — redirects signed-in users
-│   │   ├── verify-otp.tsx
-│   │   ├── reset-password.tsx # Request a reset link, or set a new password with ?token=
-│   │   ├── sentry-example.tsx # Dev only
-│   │   ├── robots[.]txt.ts   # Plain text crawler directives
-│   │   ├── sitemap[.]xml.ts  # XML sitemap
-│   │   └── api/
-│   │       ├── auth/$.ts    # Better Auth handler
-│   │       ├── health.ts
-│   │       └── sentry-example.ts # Dev only
+│   │   └── index.tsx     # Digest page (loader: getDigest)
+│   ├── start.ts          # TanStack Start instance (CSRF middleware for server fns)
 │   └── globals.css       # Global styles (Tailwind CSS v4)
-├── tests/                # Vitest and Playwright suites
-├── instrument.server.mjs # Server bootstrap — Sentry init and logging
+├── tests/                # Vitest unit suite and Playwright E2E specs
 ├── components.json       # shadcn/ui configuration
-├── Dockerfile
-├── drizzle.config.ts
 └── package.json
 ```
 
 ## Data Flow
 
-1. **Routing**: Managed by TanStack Router. `src/routes/__root.tsx` composes the shell, theme provider, header, and page outlet.
+1. **Routing**: TanStack Router manages routing. `src/routes/__root.tsx` composes the shell, the header, and the page outlet.
 2. **SSR**: TanStack Start handles the initial HTML render on the server via Nitro.
-3. **Protected routes**: `src/routes/__root.tsx` resolves the session once per navigation and puts `{ user }` on the route context, which the header uses to render the signed-in nav on the server. The pathless `_authenticated.tsx` layout only refuses an unauthenticated visitor with a redirect to `/login` and re-emits the narrowed user for child routes (`dashboard.tsx`, `settings.tsx`). Auth routes (`/login`, `/signup`) redirect signed-in arrivals to `/dashboard`.
-4. **Server functions**: `src/features/notes/server-fns.ts` exposes `listNotes`, `createNote`, and `deleteNote`, and `src/features/uploads/server-fns.ts` exposes `createUploadUrl`, all via `createServerFn`. Every function runs behind the middleware in `src/features/auth/session.ts`, which resolves the session. A refusal is a thrown `Error`, the behaviour TanStack Start documents: the caller catches it and reads `message`. The middleware's catch calls `setResponseStatus` first, so a direct HTTP caller still sees the status: 400 when the payload misses the schema, 401 without a session, 404 when the row is missing, 422 when the payload parses but the server refuses it, and 503 when a dependency is unconfigured.
-5. **Query cache**: `src/router.tsx` creates one TanStack Query `QueryClient` per router (30s default `staleTime`) and `setupRouterSsrQueryIntegration` supplies the provider plus SSR dehydration/hydration. Route loaders prefetch with the same `queryOptions` objects their components read (`accountOptions` in `src/features/auth/accounts.ts`); mutations over loader-owned data call `router.invalidate()`.
-6. **Auth flow**: Forms in `src/features/auth/components/*` call `src/lib/auth-client.ts`. `/login` supports email + password, email OTP, passkeys, and Google OAuth (when configured). `/signup` creates a password account (then holds the user on a "check your email" prompt) or sends an OTP; `/verify-otp` confirms the code and offers passkey enrollment; `/reset-password` both requests a reset link and consumes it (`?token=`).
-7. **File uploads**: `createUploadUrl` in `src/features/uploads/server-fns.ts` validates the request through `src/features/uploads/schema.ts` and reaches `handleCreateUploadUrl` in `presign.server.ts` through a dynamic import. It presigns a `uploads/<userId>/<uuid>.<ext>` PUT URL and returns `{ url, key }`; the dashboard PUTs the file bytes straight to storage, so the server never proxies them. An unsupported content type or a file over 10 MB is a 422, and an unset `MINIO_ENDPOINT` is a 503.
+3. **Digest page**: `src/routes/index.tsx` loads through the `getDigest` server function. It passes the payload as props to `DigestPage` (`src/features/digest/components/page.tsx`). So the view renders in tests without a router. The functions are public, and there are no sessions. The CSRF middleware in `src/start.ts` guards same-origin calls. `summarizeArticle` summarizes one URL on demand.
+4. **Pipeline** (`pipeline.server.ts`): This module is server-only. Handlers reach it through dynamic `import()`. Normal page loads (`loadDigest(false)`) read the cached digest directly and never refresh feeds. Manual UI refresh (`loadDigest(true)`) calls `refresh`, which fetches tracked sources subject to a 10-minute cooldown and a 6-second budget; the daily job bypasses both and completes the full sweep. The tracked list is the seed sources from `config.ts` plus learned sources stored in the cache. A learned source is added after a successful daily pick from Hacker News: the picked post's host is resolved to its RSS feed, sitemap, or HTML index page. Learned sources are dropped after three consecutive fetch failures; seeds stay. `daily` refreshes sources, picks the interesting posts without summaries, summarizes them in order, and then records the successful picks as sources. `summarizeArticle` returns the cached summary when one exists. Otherwise it extracts the page text and caches the new summary.
+5. **Cache** (`store.server.ts`): The cache is `data/cache.json`. The write uses a temporary file and a rename, so a write completes fully or not at all. A read treats a missing file as a fresh start. It drops invalid entries. It moves a corrupt file aside and loads an empty cache. The cache also holds the tracked source list, so adding a blog needs no code change or deploy.
+6. **Refresh and summarize**: Plain async handlers track pending state with `useState`. After a mutation the route calls `router.invalidate()`, and the loader runs again.
 
-## Database & Migrations
+### Runtimes (local vs Vercel)
 
-PostgreSQL is accessed using [Drizzle ORM](https://orm.drizzle.team/) paired with Bun's native SQL driver (`bun:sql` via `drizzle-orm/bun-sql`).
-
-- **Schemas**: Defined in `src/db/schema.ts` (application tables such as `notes`) and `src/db/auth-schema.ts` (Better Auth tables: `user`, `session`, `account`, `verification`, `passkey`).
-- **Migrations Directory**: Configured in `drizzle.config.ts` to output migrations to `src/db/drizzle/`.
-- **Generating Migrations**: When schema files are updated, run `bun run db:generate` to produce timestamped SQL migration files and update the snapshot journal in `src/db/drizzle/meta/`. Never handwrite SQL migrations.
-- **Applying Migrations**: Run `bun run db:migrate` to execute pending SQL migrations against the configured database (`DATABASE_URL`). For quick local development without migration tracking, `bun run db:push` can be used.
-
-For developer commands, seeding, and local workflows, see the [Development Guide](./DEVELOPMENT.md#database-management--migrations).
-
-## Authentication
-
-Handled by **Better Auth**. Supported flows:
-
-- **Email + password** — sign up and sign in with a password. The sign-up and reset forms share `PasswordSchema` (`src/features/auth/schema/password.ts`): 8–128 characters with at least one number and one symbol. That policy is client-side; Better Auth itself only enforces its 8-character minimum, so add a `before` hook on `/sign-up/email` and `/reset-password` if you need it enforced server-side too. Always available. Password hashes live in the existing `account.password` column, so no migration is involved. Sign-ups are stored with an empty `name`, matching what the email-OTP flow does, and are auto-signed-in (`requireEmailVerification` is off, so an unverified user can still sign in).
-- **Email verification** — `emailVerification.sendOnSignUp` mails a link via the `VerificationEmail` template; Better Auth's own `/api/auth/verify-email` endpoint consumes it, so there is no app route for it. `/signup` shows a "check your email" prompt after a password sign-up rather than navigating away, because the window this closes is otherwise invisible: an email-OTP sign-in by an **unverified** user triggers Better Auth's `revokeUnprovenAccountAccess`, which deletes every account row and session that user has (its defence against someone registering a password on an address they do not own) — so an unverified password would be discarded the first time that user signs in with a code. Verified users keep their password across an OTP sign-in. Set `emailAndPassword.requireEmailVerification: true` if you would rather block sign-in until the link is clicked.
-- **Password reset** — `/reset-password` sends a link (1 hour expiry) via `ResetPasswordEmail`. Better Auth's callback bounces the emailed link off `/api/auth/reset-password/:token` and back to `/reset-password?token=…`, or `?error=INVALID_TOKEN` when it has expired. Reset also _creates_ a credential account when the user has none, so OTP-only and Google-only users can adopt a password this way. It does not create a session; the user signs in afterwards.
-- **Email OTP** — sign in and sign up via one-time code. Always available.
-- **Passkeys** — register and authenticate with a device credential. Always available.
-- **Google OAuth** — enabled only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set. The app boots and functions without them.
-
-Rate limiting is configured at 20 requests per 60-second window using Better Auth's built-in `rateLimit` option.
+Local dev runs on Bun with the filesystem cache described above. `bun run build:vercel` switches Nitro to the `vercel` preset. With the preset, the cache becomes one Upstash Redis blob (key `cache`, reached through the Upstash REST API). This applies when `KV_REST_API_URL` and `KV_REST_API_TOKEN` are set. The Upstash names `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` also work. The same self-healing rules apply as with the filesystem cache. A malformed or missing blob becomes an empty cache. The file lock stays a passthrough, because Upstash has no compare-and-swap. Callers reload the cache before they write. On Vercel (`VERCEL=1`) without these variables, the cache stops with a clear configuration error. The filesystem cache is short-lived on each Vercel instance. Normal page loads (`loadDigest(false)`) read the cached digest directly without refreshing feeds, while manual UI refresh (`loadDigest(true)`) and on-demand article summarization (`summarizeArticle`) still work from the UI. The daily digest job runs standalone via `.github/workflows/digest-daily.yml` (`bun run digest:daily` at 07:00 SGT / 23:00 UTC) against Upstash Redis rather than through a Vercel Cron HTTP endpoint.
 
 ## Styling
 
-**Tailwind CSS v4** is integrated via `@tailwindcss/vite`. Theme switching is class-based on the `html` element through `next-themes`.
+The app styles with **Tailwind CSS v4** through `@tailwindcss/vite`. Theme switching sets a class on the `html` element through `next-themes`.
 
 ## Observability
 
-### LogTape + Sentry
-
-LogTape provides the app logger in `src/lib/logger.ts`. The server bootstrap (`instrument.server.mjs`) initialises Sentry with:
-
-- `dataCollection` — user identifiers, cookies, request bodies, and database payloads are not forwarded.
-- `tracesSampleRate: 0.1` — 10% of server traces are sampled to control cost.
-
-Loosen `dataCollection` and raise `tracesSampleRate` only intentionally, after reviewing your data-handling obligations.
+`console.log` and `console.error` are enough for one local app. There is no request logger and no log library.
