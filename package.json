@@ -11,7 +11,7 @@
     "dev": "bun --bun vite dev --port 3000",
     "build": "bun --bun vite build",
     "build:vercel": "bun --bun vite build --mode vercel",
-    "deploy:vercel": "bun run build:vercel && bunx vercel deploy --prebuilt",
+    "deploy:vercel": "bun run build:vercel && bunx vercel deploy --prebuilt --prod",
     "start": "bun --bun ./.output/server/index.mjs",
     "type:check": "tsc --noEmit",
     "lint:check": "oxlint --deny-warnings .",

@@ -57,9 +57,11 @@ Local runs (`bun run dev` and `bun run digest:daily`) keep using `data/cache.jso
 1. Run `bunx vercel login`, then run `bunx vercel link` in this directory.
 2. Install Upstash Redis from the Vercel Marketplace. It sets `KV_REST_API_URL` and `KV_REST_API_TOKEN` for the project. The Upstash names `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` also work. Or set the `UPSTASH_*` pair manually.
 3. Run `bunx vercel env add OPENROUTER_API_KEY` and `bunx vercel env add TAVILY_API_KEY` (plus optional `DIGEST_MODEL` and `DIGEST_PICK_COUNT`) so manual UI refreshes and on-demand summaries work on the deployed site.
-4. Run `bun run deploy:vercel`. It builds with the `vercel` preset through `bunx` and then deploys with `--prebuilt`. The Vercel CLI is not a project dependency.
+4. Add these GitHub repository secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID`. The two IDs come from `.vercel/project.json` after `bunx vercel link`. The Vercel CLI is pinned in `devDependencies`.
+5. Disable the Vercel project's Git integration if it is enabled. `cd.yml` is the deploy path.
+6. Merge to `main`. CI runs first; `cd.yml` then builds with the `vercel` preset and deploys with `--prebuilt --prod`. For a manual production deploy, run `bun run deploy:vercel`.
 
-The `cd.yml` workflow deploys every push to `main`. Add three repository secrets before you enable it: `VERCEL_TOKEN` (create one at vercel.com/account/tokens), `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID`. The `bunx vercel link` command in step 1 writes the two IDs into `.vercel/project.json`.
+`cd.yml` never deploys a red CI run: it triggers from `workflow_run` after `CI` succeeds on `main`. If any Vercel secret is missing, its preflight step fails with a clear error.
 
 For the `.github/workflows/digest-daily.yml` daily job, configure these GitHub repository secrets: `OPENROUTER_API_KEY`, `TAVILY_API_KEY`, and `KV_REST_API_URL` + `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`). You can also set optional repository variables `DIGEST_MODEL` and `DIGEST_PICK_COUNT`. Without the Upstash variables on Vercel, the app stops with a clear configuration error instead of writing to the short-lived filesystem.
 
