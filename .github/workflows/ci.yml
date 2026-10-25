@@ -96,7 +96,12 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          url=$(bunx vercel deploy --prebuilt --yes --json --token "$VERCEL_TOKEN" | jq -r '.deployment.url')
+          url=$(bunx vercel deploy --prebuilt --yes --token "$VERCEL_TOKEN" 2>&1 | grep -oE 'https://[^[:space:]]+\.vercel\.app' | tail -n 1)
+          if [ -z "$url" ]; then
+            echo "::error::could not read the preview URL from the deploy output"
+            exit 1
+          fi
+          echo "Preview: $url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
       - name: Comment the preview URL
         uses: actions/github-script@v9

@@ -57,7 +57,7 @@ jobs:
         run: |
           keys=$(curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" \
             "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID" \
-            | jq -r '.env[] | select((.target | tostring) | contains("production")) | .key')
+            | jq -r '(.env // [])[] | select((.target | tostring) | contains("production")) | .key')
           for name in OPENROUTER_API_KEY TAVILY_API_KEY; do
             if ! grep -qx "$name" <<< "$keys"; then
               echo "::error::$name is not set in the Vercel production environment"
