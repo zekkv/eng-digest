@@ -1,0 +1,53 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".vscode/**"
+      - ".idea/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - name: Install dependencies
+        env:
+          LEFTHOOK: "0"
+        run: bun install --frozen-lockfile
+      - name: Check types
+        run: bun run type:check
+      - name: Check linting
+        run: bun run lint:check
+      - name: Run unit tests
+        run: bun run test
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Run E2E tests
+        run: bun run test:e2e
+      - name: Pull Vercel project settings
+        run: bunx vercel pull --yes --environment=production
+      - name: Build for Vercel
+        run: bun run build:vercel
+      - name: Deploy to production
+        run: bunx vercel deploy --prebuilt --prod

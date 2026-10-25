@@ -1,11 +1,11 @@
 // oxlint-disable node/no-process-env
-// oxlint-disable-next-line import/no-unassigned-import
-import "zod/compile";
 
-// DATABASE_URL is deliberately not defaulted here: an integration run must use the container
-// globalSetup starts, and a unit run that silently reaches a local database hides the mistake.
-process.env.BETTER_AUTH_SECRET ??= "01234567890123456789012345678901";
-process.env.BETTER_AUTH_URL ??= "http://localhost:3000";
+// Hermetic API keys. The digest clients read process.env directly, so unit tests
+// never depend on the developer's `.env`.
+process.env.OPENROUTER_API_KEY ??= "test-openrouter-key";
+process.env.TAVILY_API_KEY ??= "test-tavily-key";
+// Unit tests use fake hosts; skip the real DNS guard.
+process.env.DIGEST_DNS_CHECK ??= "0";
 
 if (typeof window !== "undefined" && !window.matchMedia) {
   window.matchMedia = (query: string) =>

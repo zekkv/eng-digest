@@ -6,5 +6,7 @@ pre-commit:
       run: bun oxlint --fix {staged_files}
       stage_fixed: true
 
-    - name: fmt
-      run: bun fmt --staged
+    - name: oxfmt
+      glob: "*.{js,ts,jsx,tsx,md,css,yml,yaml,json}"
+      run: bun oxfmt --write {staged_files}
+      stage_fixed: true

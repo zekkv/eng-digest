@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".vscode/**"
+      - ".idea/**"
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".vscode/**"
+      - ".idea/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Format, lint, typecheck, test, and build
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - name: Install dependencies
+        env:
+          LEFTHOOK: "0"
+        run: bun install --frozen-lockfile
+      - name: Check formatting
+        run: bun run format:check
+      - name: Check linting
+        run: bun run lint:check
+      - name: Check types
+        run: bun run type:check
+      - name: Run unit tests
+        run: bun run test
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+      - name: Run E2E tests
+        run: bun run test:e2e
+      - name: Upload coverage
+        uses: actions/upload-artifact@v7
+        if: ${{ always() }}
+        with:
+          name: unit-test-results
+          path: coverage/
+          retention-days: 3
+      - name: Build for production
+        run: bun run build
+      - name: Build for Vercel
+        run: bun run build:vercel
