@@ -63,6 +63,8 @@ Local runs (`bun run dev` and `bun run digest:daily`) keep using `data/cache.jso
 
 `cd.yml` never deploys a red CI run: it triggers from `workflow_run` after `CI` succeeds on `main`. If any Vercel secret is missing, its preflight step fails with a clear error.
 
+Pull requests get a preview: the `preview` job in `ci.yml` runs after the checks pass, deploys a Vercel preview, and comments its URL on the PR. Set the same variables for the Vercel Preview environment; previews share the production Upstash database.
+
 For the `.github/workflows/digest-daily.yml` daily job, configure these GitHub repository secrets: `OPENROUTER_API_KEY`, `TAVILY_API_KEY`, and `KV_REST_API_URL` + `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`). You can also set optional repository variables `DIGEST_MODEL` and `DIGEST_PICK_COUNT`. Without the Upstash variables on Vercel, the app stops with a clear configuration error instead of writing to the short-lived filesystem.
 
 ## Documentation

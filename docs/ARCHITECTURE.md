@@ -15,7 +15,7 @@ This app builds a daily engineering digest. It collects RSS/Atom feeds, sitemap 
 .
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml            # Format, lint, typecheck, test, and build checks
+│       ├── ci.yml            # Checks, then deploys PR previews
 │       ├── cd.yml            # Deploys after CI succeeds on `main`
 │       └── digest-daily.yml  # Runs `bun run digest:daily` at 07:00 SGT (23:00 UTC)
 ├── docs/

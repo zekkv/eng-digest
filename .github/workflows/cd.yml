@@ -52,19 +52,23 @@ jobs:
       - name: Check Vercel runtime env
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          envs=$(bunx vercel env ls production --token "$VERCEL_TOKEN")
+          keys=$(curl -fsS -H "Authorization: Bearer $VERCEL_TOKEN" \
+            "https://api.vercel.com/v9/projects/$VERCEL_PROJECT_ID?teamId=$VERCEL_ORG_ID" \
+            | jq -r '.env[] | select((.target | tostring) | contains("production")) | .key')
           for name in OPENROUTER_API_KEY TAVILY_API_KEY; do
-            if ! echo "$envs" | grep -q "$name"; then
+            if ! grep -qx "$name" <<< "$keys"; then
               echo "::error::$name is not set in the Vercel production environment"
               exit 1
             fi
           done
-          if ! echo "$envs" | grep -Eq 'KV_REST_API_URL|UPSTASH_REDIS_REST_URL'; then
+          if ! grep -Eqx 'KV_REST_API_URL|UPSTASH_REDIS_REST_URL' <<< "$keys"; then
             echo "::error::the Upstash URL is not set in the Vercel production environment"
             exit 1
           fi
-          if ! echo "$envs" | grep -Eq 'KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN'; then
+          if ! grep -Eqx 'KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN' <<< "$keys"; then
             echo "::error::the Upstash token is not set in the Vercel production environment"
             exit 1
           fi
