@@ -7,6 +7,7 @@ This file provides guidance to AI agents when working with code in this reposito
 Read these files instead of deriving the facts again. Do not duplicate their content here.
 
 - `docs/ARCHITECTURE.md` describes the stack, the directory map, the data flow, and observability config.
+- `docs/DEPLOYMENT.md` describes the Vercel and GitHub Actions setup.
 - `docs/DEVELOPMENT.md` describes local setup, environment variables, scripts, testing, and tooling.
 - `README.md` gives the overview, the quickstart, and the daily digest job.
 
