@@ -10,7 +10,9 @@
     "src/routeTree.gen.ts",
     "bun.lock",
     "coverage/**",
-    "playwright-report/**"
+    "playwright-report/**",
+    "CHANGELOG.md",
+    ".release-please-manifest.json"
   ],
   "tabWidth": 2,
   "printWidth": 100,
