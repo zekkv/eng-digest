@@ -12,12 +12,12 @@ Read these files instead of deriving the facts again. Do not duplicate their con
 
 ## Running a single test
 
-`package.json` exposes only whole-suite scripts. To target one test, pass the path through:
+`package.json` exposes only whole-suite scripts. To target one test, pass the path through. Coverage thresholds apply to the whole suite, so disable coverage for a targeted run:
 
 ```bash
-bun run vitest run tests/unit/digest.test.ts            # one file
-bun run vitest run tests/unit/digest.test.ts -t "merges mocked"   # one case
-bun run playwright test tests/e2e/digest.test.ts     # one E2E file
+bun run vitest run tests/unit/digest.test.ts --coverage.enabled=false  # one file
+bun run vitest run tests/unit/digest.test.ts -t "merges mocked" --coverage.enabled=false  # one case
+bun run playwright test tests/e2e/digest.test.ts  # one end-to-end (E2E) file
 ```
 
 ## Test layout gotchas
@@ -31,10 +31,10 @@ bun run playwright test tests/e2e/digest.test.ts     # one E2E file
 - Server functions exported via `createServerFn` and consumed by routes are compiled for the client environment. TanStack Start strips `.handler(...)` bodies but keeps all other `export` declarations.
 - Never statically import server-only dependencies (`node:` built-ins, `*.server` modules) at module level in a route-imported module. The import keeps the dependency in the AST. Dead Code Elimination cannot remove it, so server code leaks into client bundles.
 - Instead, load server dependencies dynamically inside `.handler()` via `await import("#/features/digest/pipeline.server")`, and import server types with `import type`.
-- Do **not** name either kind `<feature>.server.ts`. `@tanstack/start-plugin-core`'s import-protection plugin denies `**/*.server.*` in the client environment, so the first route that imports it fails `bun run build`; `tests/unit/client-bundle-safety.test.ts` also flags a static `.server` import from the shared directories that it scans. Reserve that suffix for modules that no client-reachable file imports.
-- Do not use a `-model` suffix, and do not repeat the entity name (`notes/notes-fns.ts`). A helper with one caller lives in that caller's file. This holds even when a unit test imports and tests it: export it from the caller's file for the test. Extract a helper into its own file only when two or more application callers use it.
+- Do **not** name either kind `<feature>.server.ts`. `@tanstack/start-plugin-core`'s import-protection plugin denies `**/*.server.*` in the client environment. The first route that imports such a file fails `bun run build`. `tests/unit/client-bundle-safety.test.ts` also flags a static `.server` import from the shared directories that it scans. Reserve that suffix for modules that no client-reachable file imports.
+- Do not use a `-model` suffix, and do not repeat the entity name (`notes/notes-fns.ts`). A helper with one caller lives in that caller's file. This rule also applies when a unit test imports and tests the helper. Export the helper from the caller's file for the test. Extract a helper into its own file only when two or more application callers use it.
 - Server-function validation lives in the Zod schema. Parse with `safeParse` and rethrow `issues[0].message`. Never let a raw `ZodError` reach a route.
-- A server function refuses by throwing an `Error` with the message for the UI. Never return or throw a `Response` for a refusal. TanStack Start resolves such a `Response` as a value in the browser instead of rejecting it.
+- A server function refuses by throwing an `Error` with the message for the web app. Never return or throw a `Response` for a refusal. TanStack Start resolves such a `Response` as a value in the browser instead of rejecting it.
 
 ## Imports
 
