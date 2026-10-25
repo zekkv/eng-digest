@@ -15,13 +15,13 @@ This guide covers the local development environment, scripts catalog, environmen
    bun install
    ```
 
-2. **Configure environment variables**:
+2. **Configure the environment variables**:
 
    ```bash
    cp .env.example .env
    ```
 
-   Fill in `OPENROUTER_API_KEY` and `TAVILY_API_KEY`. The app needs them only for summarizing and extracting article text. The cached digest renders without them.
+   Enter `OPENROUTER_API_KEY` and `TAVILY_API_KEY`. The app needs them only for summarizing and extracting article text. The cached digest renders without them.
 
 3. **Start the local development server**:
 
@@ -31,13 +31,13 @@ This guide covers the local development environment, scripts catalog, environmen
 
    The application starts on [http://localhost:3000](http://localhost:3000).
 
-4. **Check the digest wiring**. The check writes nothing and makes no LLM calls:
+4. **Check the digest configuration**. The check writes nothing and makes no LLM calls:
 
    ```bash
    bun scripts/digest-daily.ts --dry-run
    ```
 
-5. **Run the daily job**. Production runs it from `.github/workflows/digest-daily.yml` at 07:00 SGT (23:00 UTC). Locally, run it by hand. Append `--force` to run it again today:
+5. **Run the daily job**. Production runs it from `.github/workflows/digest-daily.yml` at 07:00 Singapore time (SGT), 23:00 UTC. To run it locally, use the following command. Append `--force` to run it again today:
 
    ```bash
    bun run digest:daily
@@ -47,22 +47,23 @@ This guide covers the local development environment, scripts catalog, environmen
 
 ## Environment Variables
 
-| Variable             | Required                | Description                                                                      |
-| -------------------- | ----------------------- | -------------------------------------------------------------------------------- |
-| `OPENROUTER_API_KEY` | ✅                      | Powers the LLM calls that pick and summarize.                                    |
-| `TAVILY_API_KEY`     | ✅                      | Extracts article text for summaries.                                             |
-| `DIGEST_MODEL`       | Optional                | Overrides the model. The default is `meta/muse-spark-1.3-contributor`.           |
-| `DIGEST_PICK_COUNT`  | Optional                | Overrides number of candidate articles picked per daily run (default: `10`).     |
-| `KV_REST_API_URL`    | Vercel / GitHub Actions | Upstash Redis REST endpoint for cloud persistence (or `UPSTASH_REDIS_REST_URL`). |
-| `KV_REST_API_TOKEN`  | Vercel / GitHub Actions | Upstash Redis REST token for cloud persistence (or `UPSTASH_REDIS_REST_TOKEN`).  |
+| Variable             | Required                | Description                                                                          |
+| -------------------- | ----------------------- | ------------------------------------------------------------------------------------ |
+| `OPENROUTER_API_KEY` | ✅                      | Powers the LLM calls that pick and summarize.                                        |
+| `TAVILY_API_KEY`     | ✅                      | Extracts article text for summaries.                                                 |
+| `DIGEST_MODEL`       | Optional                | Overrides the model. The default is `meta/muse-spark-1.3-contributor`.               |
+| `DIGEST_PICK_COUNT`  | Optional                | Overrides the number of candidate articles that the daily run picks (default: `10`). |
+| `DIGEST_DNS_CHECK`   | Optional                | Set to `0` to skip DNS checks on fetched hosts. Unit tests set it to `0`.            |
+| `KV_REST_API_URL`    | Vercel / GitHub Actions | Upstash Redis REST endpoint for cloud persistence (or `UPSTASH_REDIS_REST_URL`).     |
+| `KV_REST_API_TOKEN`  | Vercel / GitHub Actions | Upstash Redis REST token for cloud persistence (or `UPSTASH_REDIS_REST_TOKEN`).      |
 
-On local dev, the app defaults to the filesystem cache under `data/cache.json`. When deployed to Vercel or running the daily digest workflow in GitHub Actions, the Upstash Redis credentials are used so both share the same cloud cache. See `.env.example` for reference templates.
+In local development, the app uses the filesystem cache at `data/cache.json`. On Vercel, the app uses Upstash Redis. The daily digest job also uses Upstash Redis, so both share the same cloud cache. Refer to `.env.example` for templates.
 
 ---
 
 ## Scripts Catalog
 
-The scripts live in `package.json`. That file is the catalog. This guide does not repeat it.
+The scripts are in `package.json`. That file is the catalog. This guide does not repeat it.
 
 ---
 
@@ -84,7 +85,13 @@ bun run test
 
 ### 2. End-to-End Tests (`tests/e2e/`)
 
-- Playwright drives them (`playwright.config.ts`). Its `webServer` block starts `bun run dev` on port 3000. It reuses a server that is already running.
+- Playwright runs them (`playwright.config.ts`). The `webServer` block starts `bun run dev` on port 3000. Locally, Playwright reuses a server that is already running. In continuous integration (CI), Playwright starts a new server.
+
+Install the Chromium browser before the first end-to-end (E2E) run:
+
+```bash
+bunx playwright install chromium
+```
 
 Run the E2E tests:
 
@@ -92,7 +99,7 @@ Run the E2E tests:
 bun run test:e2e
 ```
 
-Run Playwright in interactive UI mode:
+Run Playwright in interactive mode:
 
 ```bash
 bunx playwright test --ui
@@ -100,7 +107,7 @@ bunx playwright test --ui
 
 ### Running Targeted Tests
 
-See "Running a single test" in AGENTS.md to target one file or one case.
+Refer to "Running a single test" in AGENTS.md to target one file or one case.
 
 ---
 
@@ -113,7 +120,7 @@ See "Running a single test" in AGENTS.md to target one file or one case.
   bun run lint:check
   bun run lint:fix
   ```
-- **[Oxfmt](https://oxc.rs/docs/guide/usage/formatter.html)**: a fast formatter for code and markdown.
+- **[Oxfmt](https://oxc.rs/docs/guide/usage/formatter.html)**: a fast formatter for code and Markdown.
   ```bash
   bun run format:check
   bun run format:fix
@@ -137,14 +144,14 @@ bun run prepare # reinstalls hooks if needed
 
 ### Server Functions and Bundle Isolation
 
-Client routes import server functions created with `createServerFn` (TanStack Start). TanStack Start removes the `.handler(...)` bodies from client builds. It keeps all other code in the module.
+Client routes import server functions that `createServerFn` creates (TanStack Start). TanStack Start removes the `.handler(...)` bodies from client builds. It keeps all other code in the module.
 
 - **Avoid module-level server imports**: Never import server-only dependencies at the top level of a route-imported module. The test `tests/unit/client-bundle-safety.test.ts` enforces this rule.
 - **Use dynamic imports inside handlers**:
   ```ts
   const { loadDigest } = await import("#/features/digest/pipeline.server");
   ```
-- **Do not use `.server.ts` naming for route-imported files**: `@tanstack/start-plugin-core` blocks files matching `**/*.server.*` from the client environment. Reserve the `.server.ts` suffix for modules that no client route imports.
+- **Do not use the `.server.ts` suffix for route-imported files**: `@tanstack/start-plugin-core` blocks files that match `**/*.server.*` from the client environment. Reserve the `.server.ts` suffix for modules that no client route imports.
 
 ### Imports and Path Aliases
 
@@ -158,7 +165,7 @@ Do not add another alias unless all three files change together.
 
 ### Adding Environment Variables
 
-When adding a new environment variable:
+To add an environment variable:
 
 1. Add a commented entry with its description and defaults in `.env.example`. Server code reads `process.env` directly. Keep new variables optional unless the app cannot start without them.
 2. If the variable changes setup or prerequisites, describe it in `README.md` and in this guide.
