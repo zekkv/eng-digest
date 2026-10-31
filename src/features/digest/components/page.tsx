@@ -378,7 +378,7 @@ export function DigestPage({ data }: { data: DigestPayload }) {
       )}
 
       <Sheet open={detailOpen} onOpenChange={setDetailOpen}>
-        <SheetContent className="relative max-h-[92dvh] w-full overflow-y-auto">
+        <SheetContent className="max-h-[92dvh] w-full overflow-y-auto">
           <SheetHeader className="sr-only">
             <SheetTitle>{selected?.title ?? "Article"}</SheetTitle>
           </SheetHeader>
