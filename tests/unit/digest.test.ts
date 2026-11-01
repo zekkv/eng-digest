@@ -256,6 +256,29 @@ describe("selectInteresting", () => {
     }
   });
 
+  it("matches a picked url the model normalised", async () => {
+    const web = [
+      article({ url: "https://example.test/a", title: "a" }),
+      article({ url: "https://www.example.test/b?utm_source=feed", title: "b" }),
+    ];
+    const got = await selectInteresting(web, 2, () =>
+      Promise.resolve({ picked: ["https://example.test/b/", "EXAMPLE.test/a"] })
+    );
+    expect(got.map(a => a.url)).toEqual([
+      "https://example.test/a",
+      "https://www.example.test/b?utm_source=feed",
+    ]);
+  });
+
+  it("asks the picker model at low effort", async () => {
+    const seen: unknown[] = [];
+    await selectInteresting(cands, 2, (_prompt, _text, options) => {
+      seen.push(options);
+      return Promise.resolve({ picked: ["u1"] });
+    });
+    expect(seen[0]).toEqual({ model: "anthropic/claude-haiku-5.5", effort: "low" });
+  });
+
   it("tops up with the newest remaining when the picker matches fewer than n", async () => {
     const got = await selectInteresting(cands, 3, () => Promise.resolve({ picked: ["u3"] }));
     expect(got.map(a => a.url)).toEqual(["u3", "u1", "u2"]);
@@ -715,9 +738,24 @@ describe("OpenRouter client", () => {
     };
     expect(parsed.model).toBe(DEFAULT_MODEL);
     expect(parsed.max_tokens).toBe(LLM_MAX_TOKENS);
-    expect(parsed.reasoning).toEqual({ effort: "low" });
+    expect(parsed.reasoning).toEqual({ effort: "medium" });
     expect(parsed.response_format).toEqual({ type: "json_object" });
     expect(parsed.messages[1].content).toHaveLength(MAX_CHARS);
+  });
+
+  it("honours a per-call model and reasoning effort", async () => {
+    let body = "";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: unknown, init?: { body?: string }) => {
+        body = init?.body ?? "";
+        return { ok: true, json: async () => ({ choices: [{ message: { content: "{}" } }] }) };
+      })
+    );
+    await completeJson("sys", "user", { model: "some/picker", effort: "low" });
+    const parsed = JSON.parse(body) as { model: string; reasoning: unknown };
+    expect(parsed.model).toBe("some/picker");
+    expect(parsed.reasoning).toEqual({ effort: "low" });
   });
 
   it("throws UpstreamAuthError on 401/403", async () => {

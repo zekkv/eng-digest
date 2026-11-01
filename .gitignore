@@ -16,8 +16,10 @@ bun.lockb
 playwright-report
 test-results
 coverage
-data
+/data
 scratch
+evals/results
+evals/data/text
 __pycache__/
 .gstack/
 .claude

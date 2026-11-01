@@ -12,7 +12,8 @@
     "coverage/**",
     "playwright-report/**",
     "CHANGELOG.md",
-    ".release-please-manifest.json"
+    ".release-please-manifest.json",
+    "evals/results/**"
   ],
   "tabWidth": 2,
   "printWidth": 100,

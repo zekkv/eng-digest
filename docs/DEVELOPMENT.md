@@ -51,7 +51,8 @@ This guide covers the local development environment, scripts catalog, environmen
 | -------------------- | ----------------------- | ------------------------------------------------------------------------------------ |
 | `OPENROUTER_API_KEY` | ✅                      | Powers the LLM calls that pick and summarize.                                        |
 | `TAVILY_API_KEY`     | ✅                      | Extracts article text for summaries.                                                 |
-| `DIGEST_MODEL`       | Optional                | Overrides the model. The default is `meta/muse-spark-1.3-contributor`.               |
+| `DIGEST_MODEL`       | Optional                | Overrides the summariser model. The default is `meta/muse-spark-1.3-contributor`.   |
+| `DIGEST_PICK_MODEL`  | Optional                | Overrides the picker model. The default is `anthropic/claude-haiku-5.5`.             |
 | `DIGEST_PICK_COUNT`  | Optional                | Overrides the number of candidate articles that the daily run picks (default: `10`). |
 | `DIGEST_DNS_CHECK`   | Optional                | Set to `0` to skip DNS checks on fetched hosts. Unit tests set it to `0`.            |
 | `KV_REST_API_URL`    | Vercel / GitHub Actions | Upstash Redis REST endpoint for cloud persistence (or `UPSTASH_REDIS_REST_URL`).     |
@@ -108,6 +109,69 @@ bunx playwright test --ui
 ### Running Targeted Tests
 
 Refer to "Running a single test" in AGENTS.md to target one file or one case.
+
+---
+
+## LLM Evals (`evals/`)
+
+Digest quality depends on two prompts and one model choice. `evals/` measures them instead of guessing. It is a standalone Bun script: not part of the Vitest suite, and it never runs in CI.
+
+- `evals/data/pools.json` — 160 real candidates frozen from `data/cache.json` in four pools of 40. That is the production pool shape: 32 dated posts plus 8 undated discoveries.
+- `evals/data/labels.json` — hand-written gold labels (`pick`, `trap`, or unlisted for neutral) with a reason for each. They were written from title + teaser only, which is all the picker sees. Do not edit them to fit a result.
+- `evals/data/summary-cases.json` and `evals/data/text/` — six articles with Tavily-extracted text frozen on disk, plus the must-mention facts for each.
+- `evals/prompts.ts` — the prompt variants. The baseline imports the shipped prompt, so the eval always measures what production sends.
+- `evals/run.ts` — the runner. Writes `evals/results/<suite>-<stage>-<stamp>.{json,md}`.
+
+```bash
+bun run eval picker --stage screen
+bun run eval picker --stage prompts --configs "anthropic/claude-haiku-5.5#low" --repeats 3
+bun run eval summary --stage screen
+bun run eval summary --stage prompts --configs "..." --judge false
+bun run eval --extract-texts   # re-fetch the six article bodies (gitignored)
+```
+
+Article bodies are not committed. `--extract-texts` refills `evals/data/text/` from the frozen URLs with Tavily.
+
+Config ids are `model#effort`; `#none` sends no `reasoning` field. `--repeats` controls samples per cell and defaults to 2.
+
+Picker metrics: `utility = (gold - trap) / n`, precision, recall, distinct blogs, duplicate-topic picks, under-picks (production tops a short list up with the newest post, so under-picking costs quality), and invalid JSON. Summary metrics: must-mention fact coverage, numeric grounding against the source, jargon terms that actually appear in the source, schema shape, and a blind judge score on five axes. The judge runs `deepseek/deepseek-v4.1-flash-1017` at its `max` effort, on shuffled anonymous summaries. It shares a family with one candidate model, so treat it as a ranking aid; fact coverage and grounding are deterministic and do not depend on it.
+
+A full screen costs a few dollars. `--judge false` skips the judge calls.
+
+### Results (2026-11-02)
+
+Picker, 24 samples per cell (4 pools x 6 repeats). `utility = (gold - trap) / 10`:
+
+| picker model               | effort | prompt                | utility         | trap rate | under-pick |
+| -------------------------- | ------ | --------------------- | --------------- | --------- | ---------- |
+| claude-haiku-5.5           | low    | scoring (now shipped) | **0.63 ± 0.07** | 0.11      | 0.0        |
+| claude-haiku-5.5           | low    | previous prompt       | 0.51 ± 0.05     | 0.17      | 0.5        |
+| claude-haiku-5.5           | low    | contrastive           | 0.58 ± 0.08     | 0.15      | 1.3        |
+| claude-haiku-5.5           | low    | stricter scoring      | 0.45 ± 0.08     | 0.24      | 0.7        |
+| muse-spark-1.3-contributor | low    | scoring               | 0.53            | 0.18      | 0.0        |
+| muse-spark-1.3-contributor | low    | previous prompt       | 0.40            | 0.25      | 0.4        |
+
+Higher reasoning effort did not help picking: muse improved only 0.40 -> 0.44 at 2.7x the latency, while haiku (0.59 -> 0.51) and gemini (0.49 -> 0.36) got worse. The picker now runs at `low` on haiku.
+
+Summaries, 12 samples per cell, blind judge (1-5):
+
+| summary model              | effort | judge      | facts    | jargon ok | p50 |
+| -------------------------- | ------ | ---------- | -------- | --------- | --- |
+| muse-spark-1.3-contributor | low    | 4.55       | 0.88     | 0.79      | 17s |
+| muse-spark-1.3-contributor | medium | **4.73**   | **0.91** | **0.89**  | 27s |
+| muse-spark-1.3-contributor | high   | 4.80       | 0.89     | 0.86      | 41s |
+| deepseek-v4.1-flash        | high   | 4.73       | 0.90     | 0.77      | 39s |
+| gemini-3.8-flash           | high   | 4.38       | 0.81     | 0.71      | 28s |
+| claude-haiku-5.5           | medium | not judged | 0.83     | 0.60      | 11s |
+
+Summaries want more reasoning than picking does: medium is the knee. Haiku is not used for summaries because its jargon quality was far worse (0.60 vs 0.89) and its low and high efforts produced malformed summaries (valid 0.83 and 0.75). Those haiku cells are not judge-scored, so that verdict rests on the deterministic metrics.
+
+Two findings came from the eval rather than the models:
+
+- The picker silently lost picks when a model rewrote a URL (`www.` stripped, `utm_*` dropped). `selectInteresting` now matches on `pickKey` and keeps the candidate's own URL.
+- The `select-score-strict` variant, which added more prohibitions, scored worse than the simpler scoring prompt. More rules is not automatically better.
+
+The remaining prompt variants (`summary-tight`, `summary-minimal`) are untested: the OpenRouter key hit its spend cap before they ran.
 
 ---
 

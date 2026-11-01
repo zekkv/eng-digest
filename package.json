@@ -19,6 +19,7 @@
     "format:check": "oxfmt --check .",
     "format:fix": "oxfmt --write .",
     "digest:daily": "bun scripts/digest-daily.ts",
+    "eval": "bun evals/run.ts",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "prepare": "lefthook install || true"
