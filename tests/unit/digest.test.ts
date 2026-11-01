@@ -22,6 +22,7 @@ import {
   fetchHnStories,
   hostnameOf,
   normalizeSummary,
+  pickKey,
   resolvePickCount,
   selectInteresting,
   stripHtml,
@@ -212,6 +213,17 @@ describe("mergeArticles", () => {
     const preserved = article({ url: "old-pick", published: 1 });
     const out = mergeArticles([preserved], many, ["old-pick"]);
     expect(out.some(a => a.url === "old-pick")).toBe(true);
+  });
+});
+
+describe("pickKey", () => {
+  it("ignores tracking parameters and host case", () => {
+    expect(pickKey("https://www.ex.test/p/?utm_source=x&ref=y")).toBe(pickKey("https://ex.test/p"));
+  });
+
+  it("keeps query values case-sensitive and unambiguous", () => {
+    expect(pickKey("https://ex.test/p?id=ABC")).not.toBe(pickKey("https://ex.test/p?id=abc"));
+    expect(pickKey("https://ex.test/p?x=a%26y=b")).not.toBe(pickKey("https://ex.test/p?x=a&y=b"));
   });
 });
 

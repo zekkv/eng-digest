@@ -1031,12 +1031,14 @@ export function pickKey(raw: string): string {
     const url = new URL(raw.trim());
     const host = url.hostname.toLowerCase().replace(/^www\./, "");
     const path = url.pathname.replace(/\/+$/, "") || "/";
+    // Values stay case-sensitive and percent-encoded: `?id=ABC` and `?id=abc` are
+    // different articles, and `?x=a%26y=b` must not collapse into `?x=a&y=b`.
     const query = [...url.searchParams.entries()]
       .filter(([name]) => !isTrackingParam(name))
-      .map(([name, value]) => `${name.toLowerCase()}=${value}`)
+      .map(([name, value]) => `${name.toLowerCase()}=${encodeURIComponent(value)}`)
       .toSorted()
       .join("&");
-    return `${host}${path}${query ? `?${query}` : ""}`.toLowerCase();
+    return `${host}${path}`.toLowerCase() + (query ? `?${query}` : "");
   } catch {
     return raw.trim().toLowerCase();
   }
