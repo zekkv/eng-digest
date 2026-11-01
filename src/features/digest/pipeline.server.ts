@@ -10,6 +10,7 @@ import {
   DAILY_SUMMARY_BUDGET,
   DEFAULT_MODEL,
   DEFAULT_PICK_COUNT,
+  DEFAULT_PICK_MODEL,
   DISCOVERY_TIMEOUT_MS,
   FEED_BATCH,
   FEED_MAX_BYTES,
@@ -25,6 +26,7 @@ import {
   MAX_NEW_SOURCES_PER_RUN,
   MAX_PER_FEED,
   PAGE_MAX_BYTES,
+  PICK_REASONING_EFFORT,
   PROMPT,
   SEED_SOURCES,
   SELECT_PROMPT,
@@ -995,6 +997,20 @@ export async function fetchCandidates(
 
 const PickerOutput = z.object({ picked: z.array(z.unknown()).optional() });
 
+/** Match key for picker output. Models drop `www.`, query strings, and trailing slashes
+ * when they copy a URL, so compare the meaningful parts and keep the candidate's own URL.
+ * Path case is folded because the key only routes back to a candidate, never to a fetch. */
+export function pickKey(raw: string): string {
+  try {
+    const url = new URL(raw.trim());
+    const host = url.hostname.toLowerCase().replace(/^www\./, "");
+    const path = url.pathname.replace(/\/+$/, "") || "/";
+    return `${host}${path}`.toLowerCase();
+  } catch {
+    return raw.trim().toLowerCase();
+  }
+}
+
 /** Ask the LLM to pick the best n; fall back to newest on any failure. */
 export async function selectInteresting(
   candidates: CandidateArticle[],
@@ -1006,14 +1022,19 @@ export async function selectInteresting(
     .join("\n");
   try {
     const parsed = PickerOutput.safeParse(
-      await complete(SELECT_PROMPT.replace("{n}", String(n)), listed)
+      await complete(SELECT_PROMPT.replace("{n}", String(n)), listed, {
+        model: process.env.DIGEST_PICK_MODEL?.trim() || DEFAULT_PICK_MODEL,
+        effort: PICK_REASONING_EFFORT,
+      })
     );
     const picked = new Set(
       parsed.success
-        ? (parsed.data.picked ?? []).filter((url): url is string => typeof url === "string")
+        ? (parsed.data.picked ?? [])
+            .filter((url): url is string => typeof url === "string")
+            .map(pickKey)
         : []
     );
-    const chosen = candidates.filter(a => picked.has(a.url)).slice(0, n);
+    const chosen = candidates.filter(a => picked.has(pickKey(a.url))).slice(0, n);
     if (chosen.length > 0) {
       // The picker may match fewer than n; top up with the newest remaining.
       if (chosen.length < n) {

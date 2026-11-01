@@ -1,0 +1,577 @@
+{
+  "note": "Gold labels for the picker eval. Written by hand from title + teaser only, which is the same information the picker sees (the prompt carries no date and no source). Labels were fixed before any model was run; do not edit them to fit results. tier: 'pick' = a good pick for a backend-leaning generalist learning advanced topics; 'trap' = clearly wrong (changelog, release note, vendor marketing, funding, hiring, policy, off-topic); unlisted = neutral, neither rewarded nor penalised. topics group posts that cover the same news event so a duplicate pick can be counted.",
+  "pools": {
+    "pool-1": {
+      "picks": [
+        {
+          "url": "https://danluu.com/ambitious/",
+          "why": "First-hand essay on engineering ambition and the cost of low expectations; transferable judgement."
+        },
+        {
+          "url": "https://blog.roku.com/developer/gitlab-move",
+          "why": "Repository migration war story: real constraints, real failure modes."
+        },
+        {
+          "url": "https://github.com/Zagitta/gpu-unlock",
+          "why": "Hardware reverse engineering with a measurable instruction-issue result."
+        },
+        {
+          "url": "https://twitter.com/log4j/status/2113014142600953868?s=46",
+          "why": "Root shell on a consumer TV: exploit path and vendor response."
+        },
+        {
+          "url": "https://thenewstack.io/vercel-oidc-static-credentials/",
+          "why": "Security design story with a twist: the vendor's own long-lived token."
+        },
+        {
+          "url": "https://block.xyz/dessa",
+          "why": "Model trained only on speech: a real design choice with a rationale."
+        },
+        {
+          "url": "https://blog.cloudflare.com/post-quantum-geo-key-manager/",
+          "why": "Post-quantum key management design: threat model, architecture, tradeoffs."
+        },
+        {
+          "url": "https://developer.nvidia.com/blog/scaling-nvidia-tensorrt-performance-optimization-beyond-a-single-build-route-with-the-global-performance-tuner-part-1/",
+          "why": "Deep performance engineering: compilation search space, not a product pitch."
+        },
+        {
+          "url": "https://developer.nvidia.com/blog/scaling-nvidia-tensorrt-performance-optimization-beyond-a-single-build-route-with-the-global-performance-tuner-part-2/",
+          "why": "Same series as part 1; substantive on its own."
+        },
+        {
+          "url": "https://blog.calif.io/p/iphone",
+          "why": "Security research writeup with a concrete exploit chain."
+        },
+        {
+          "url": "https://www.infoq.com/news/2026/10/csiro-serverless-genomic-variant/?utm_campaign=infoq_content&utm_source=infoq&utm_medium=feed&utm_term=global",
+          "why": "Architecture case study with a 100x query claim and the design behind it."
+        }
+      ],
+      "traps": [
+        {
+          "url": "https://www.apricitas.io/p/ai-and-the-fall-of-the-creative-class",
+          "why": "Labour economics, not engineering."
+        },
+        { "url": "https://stealmybitcoin.com/", "why": "Novelty site, no engineering content." },
+        { "url": "https://freedns.afraid.org/", "why": "Bare link with no title or teaser." },
+        {
+          "url": "https://thenewstack.io/aws-says-its-ai-security-agent-fixes-89-of-bugs-but-theres-a-catch/",
+          "why": "Vendor metric announcement."
+        },
+        {
+          "url": "https://thenewstack.io/agentic-software-factory-sensor/",
+          "why": "Thought leadership, no mechanism."
+        },
+        {
+          "url": "https://thenewstack.io/optimize-kubernetes-gpu-pools/",
+          "why": "Vendor column about measuring utilisation; thin."
+        },
+        {
+          "url": "https://www.southampton.ac.uk/~doug/quantum_physics/index.html",
+          "why": "Physics explainer, off-topic."
+        },
+        {
+          "url": "https://www.infoq.com/news/2026/10/data-agent-kit-ga/?utm_campaign=infoq_content&utm_source=infoq&utm_medium=feed&utm_term=global",
+          "why": "GA announcement."
+        },
+        {
+          "url": "https://github.com/obsproject/obs-studio/releases/tag/33.0.0",
+          "why": "Release notes."
+        },
+        {
+          "url": "https://grapheneos.social/@GrapheneOS/117492375462459244",
+          "why": "Ecosystem/policy news, no engineering depth."
+        },
+        {
+          "url": "https://www.figma.com/blog/6-ways-teams-are-experimenting-with-code-layers/",
+          "why": "Listicle of customer stories."
+        },
+        {
+          "url": "https://vercel.com/changelog/vercel-cli-adds-spend-management",
+          "why": "Changelog."
+        },
+        { "url": "https://cve.0xosprey.com/", "why": "Bare tool link." },
+        {
+          "url": "https://vercel.com/changelog/send-feedback-from-vercel-mcp",
+          "why": "Changelog."
+        },
+        {
+          "url": "https://vercel.com/changelog/deployments-now-show-build-cache-size",
+          "why": "Changelog."
+        },
+        {
+          "url": "https://webkit.org/blog/18486/webkit-features-for-safari-27-1/",
+          "why": "Release notes."
+        },
+        {
+          "url": "https://vercel.com/changelog/vercel-connect-adds-managed-stripe-api-keys",
+          "why": "Changelog."
+        },
+        {
+          "url": "https://www.kimi.ai/blog/kimi-k3-1-pro",
+          "why": "Model release announcement; high HN score is the bait."
+        },
+        {
+          "url": "https://www.databricks.com/blog/built-agents-case-spark-declarative-pipelines",
+          "why": "Vendor argument for its own product."
+        },
+        {
+          "url": "https://www.databricks.com/blog/real-time-energy-trading-and-analytics-databricks",
+          "why": "Customer case study."
+        },
+        {
+          "url": "https://research.google/blog/bringing-foundational-models-to-the-front-lines-of-tb-screening/",
+          "why": "Applied ML for healthcare; off-core and promotional."
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/multi-turn-reinforcement-learning-on-amazon-sagemaker-ai-a-hands-on-guide/",
+          "why": "Vendor tutorial."
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/orchestrating-sagemaker-ai-endpoint-auto-scaling-with-aws-cdk/",
+          "why": "Vendor how-to."
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/visualize-points-and-routes-with-geojson-in-amazon-quick-sight-layer-maps/",
+          "why": "Vendor feature note."
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/how-bayer-crop-science-built-an-agentic-decision-engine-on-amazon-bedrock-agentcore-with-aws-unified-operations/",
+          "why": "Vendor case study."
+        },
+        {
+          "url": "https://huggingface.co/blog/allenai/litpivot",
+          "why": "Research paper blurb with no teaser."
+        },
+        {
+          "url": "https://developer.nvidia.com/blog/using-ai-agents-to-teach-robots-like-microduck-to-walk-in-simulation/",
+          "why": "Research promo."
+        },
+        {
+          "url": "https://thenewstack.io/kubernetes-agentic-ai-inference/",
+          "why": "Conference roundup."
+        },
+        {
+          "url": "https://thenewstack.io/linux-developer-device-management/",
+          "why": "IT/org story, no engineering depth."
+        }
+      ],
+      "topics": [
+        {
+          "id": "tensorrt-tuner",
+          "urls": [
+            "https://developer.nvidia.com/blog/scaling-nvidia-tensorrt-performance-optimization-beyond-a-single-build-route-with-the-global-performance-tuner-part-1/",
+            "https://developer.nvidia.com/blog/scaling-nvidia-tensorrt-performance-optimization-beyond-a-single-build-route-with-the-global-performance-tuner-part-2/"
+          ]
+        }
+      ]
+    },
+    "pool-2": {
+      "picks": [
+        {
+          "url": "https://thenewstack.io/php2shell-ai-patch-race/",
+          "why": "Security analysis of a live incident: what failed and why patching lagged."
+        },
+        {
+          "url": "https://www.infoq.com/news/2026/10/cloudflare-cpu-memory-profiling/?utm_campaign=infoq_content&utm_source=infoq&utm_medium=feed&utm_term=global",
+          "why": "On-demand profiling in production: a real observability capability with mechanics."
+        },
+        {
+          "url": "https://www.infoq.com/articles/multi-cloud-finops-cost-optimization/?utm_campaign=infoq_content&utm_source=infoq&utm_medium=feed&utm_term=global",
+          "why": "Egress-cost model and an engineering framework, not a product pitch."
+        },
+        {
+          "url": "https://openai.com/index/securing-our-frontier-model-training-environment",
+          "why": "Containment architecture and red-teaming for high-value compute."
+        },
+        {
+          "url": "https://huggingface.co/blog/microsoft/thinkingbox-training",
+          "why": "Turning database grading into RL rewards: training technique with detail."
+        },
+        {
+          "url": "https://netflixtechblog.com/single-tenant-titus-vm-level-isolation-on-a-multi-tenant-container-platform-6d8b1909d163?source=rss----2615bd06b42e---4",
+          "why": "Deep infrastructure design: isolation model on a multi-tenant scheduler."
+        },
+        {
+          "url": "https://stackoverflow.blog/2026/10/22/the-regression-tests-nobody-writes-capturing-how-software-actually-behaves/",
+          "why": "Testing practice with a concrete technique."
+        },
+        {
+          "url": "https://thenewstack.io/letta-frontiermemory-agent-harness-benchmark/",
+          "why": "Comparative benchmark across five harnesses; measured result."
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/stream-low-latency-speech-from-ai-agents-using-kokoro-tts-on-amazon-sagemaker-ai/",
+          "why": "Latency engineering: sentence-level streaming and the numbers behind it."
+        },
+        {
+          "url": "https://developer.nvidia.com/blog/how-to-read-data-into-gpu-memory-in-python-with-nvidia-gpudirect-storage/",
+          "why": "Systems deep dive: bypassing the CPU copy path."
+        }
+      ],
+      "traps": [
+        { "url": "https://music.apple.com/this-url-doesnt-exist", "why": "Joke link." },
+        {
+          "url": "https://www.infoq.com/news/2026/10/anthropic-oss-security-scanner/?utm_campaign=infoq_content&utm_source=infoq&utm_medium=feed&utm_term=global",
+          "why": "Service launch announcement."
+        },
+        {
+          "url": "https://www.infoq.com/news/2026/10/ngrx-22-angular/?utm_campaign=infoq_content&utm_source=infoq&utm_medium=feed&utm_term=global",
+          "why": "Framework release notes."
+        },
+        { "url": "https://allenai.org/blog/litpivot", "why": "Research blurb, no teaser." },
+        {
+          "url": "https://stackoverflow.blog/2026/10/23/rumors-of-the-saas-demise-are-greatly-exaggerated/",
+          "why": "Podcast/opinion."
+        },
+        {
+          "url": "https://www.figma.com/blog/how-to-put-your-design-system-to-work-with-the-figma-agent/",
+          "why": "Product how-to."
+        },
+        {
+          "url": "https://vercel.com/changelog/send-feedback-from-vercel-cli",
+          "why": "Changelog."
+        },
+        {
+          "url": "https://huggingface.co/blog/torch-neuronx-model-support",
+          "why": "Tool announcement, no teaser."
+        },
+        {
+          "url": "https://openai.com/index/openai-nask-ai-safety-security-partnership",
+          "why": "Partnership/policy."
+        },
+        {
+          "url": "https://www.eff.org/deeplinks/2026/10/canadians-are-running-out-time-oppose-dangerous-c-22-surveillance-bill",
+          "why": "Policy advocacy."
+        },
+        {
+          "url": "https://vercel.com/changelog/eight-more-tlds-now-eligible-for-a-free-domain-with-pro",
+          "why": "Changelog."
+        },
+        {
+          "url": "https://www.anthropic.com/news/open-call-guest-investigators-life-sciences",
+          "why": "Hiring/programme announcement."
+        },
+        {
+          "url": "https://webkit.org/blog/18482/release-notes-for-safari-technology-preview-255/",
+          "why": "Release notes."
+        },
+        {
+          "url": "https://cloud.google.com/blog/products/ai-machine-learning/expanding-claude-availability-on-google-cloud/",
+          "why": "Partnership announcement."
+        },
+        {
+          "url": "https://www.databricks.com/blog/ai-cost-management",
+          "why": "Vendor thought piece."
+        },
+        { "url": "https://openai.com/index/decisions-api", "why": "Product launch." },
+        {
+          "url": "https://www.databricks.com/blog/fraud-analyst-ai-coworker-detecting-telecom-fraud-real-time-one-platform",
+          "why": "Customer case study."
+        },
+        { "url": "https://www.databricks.com/blog/ai-bill-coming", "why": "Interview/opinion." },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/amazon-polly-delivers-a-major-upgrade-to-its-generative-engine/",
+          "why": "Product update."
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/how-iskaypet-unified-corporate-knowledge-with-amazon-bedrock-managed-knowledge-bases/",
+          "why": "Customer case study."
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/announcing-new-ways-to-customize-models-with-sagemaker-ai-without-managing-gpus/",
+          "why": "Feature announcement."
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/write-your-own-training-loop-without-managing-gpus-with-amazon-sagemaker-training-sessions/",
+          "why": "Vendor tutorial."
+        },
+        {
+          "url": "https://www.anthropic.com/news/donating-agent-skills-to-the-agentic-ai-foundation",
+          "why": "Ecosystem announcement."
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/deploy-ai-in-a-hipaa-eligible-environment-with-amazon-quick/",
+          "why": "Compliance how-to."
+        },
+        {
+          "url": "https://thenewstack.io/microsoft-streaming-speech-models/",
+          "why": "Product news."
+        }
+      ],
+      "topics": []
+    },
+    "pool-3": {
+      "picks": [
+        {
+          "url": "https://www.microsoft.com/en-us/research/blog/flint-interactive-a-language-for-creating-interactive-data-visualizations/",
+          "why": "A language design for agent-generated interactive visualisation: real abstraction work."
+        },
+        {
+          "url": "https://developer.nvidia.com/blog/running-frontier-class-ai-models-across-8-nvidia-dgx-spark-nodes/",
+          "why": "Multi-node inference experiment with measured behaviour."
+        },
+        {
+          "url": "https://thenewstack.io/penai-cobol-migration-benchmark/",
+          "why": "Benchmark analysis: what the score does and does not show."
+        },
+        {
+          "url": "https://thenewstack.io/pytorch-tpu-trainium-migration/",
+          "why": "Portability work across accelerator backends."
+        },
+        {
+          "url": "https://thenewstack.io/php2shell-chainguard-embargo-dispute/",
+          "why": "Disclosure/embargo process failure: a real postmortem of coordination."
+        },
+        {
+          "url": "https://www.infoq.com/news/2026/10/jellyfish-ai-productivity/?utm_campaign=infoq_content&utm_source=infoq&utm_medium=feed&utm_term=global",
+          "why": "Study of 718 firms: measured claim with a mechanism (downstream bottlenecks)."
+        },
+        {
+          "url": "https://cloud.google.com/blog/topics/ai-infrastructure/agent-compute-engine-deep-dive/",
+          "why": "Architecture deep dive on compute isolation for agents."
+        },
+        {
+          "url": "https://shopify.engineering/remote-dev",
+          "why": "First-hand engineering: a dev environment built for parallel agents."
+        },
+        {
+          "url": "https://www.infoq.com/articles/ai-changes-data-interface/?utm_campaign=infoq_content&utm_source=infoq&utm_medium=feed&utm_term=global",
+          "why": "Constrained-SQL workflow with a reproducibility argument."
+        },
+        {
+          "url": "https://supabase.com/blog/give-your-supabase-app-its-own-mcp-server",
+          "why": "Security design: tool calls scoped by existing row-level security."
+        },
+        {
+          "url": "https://vercel.com/blog/death-to-long-lived-static-credentials",
+          "why": "Design essay on credential lifetime with a migration path."
+        }
+      ],
+      "traps": [
+        {
+          "url": "https://thenewstack.io/openai-donates-open-responses/",
+          "why": "Standards announcement."
+        },
+        {
+          "url": "https://cloud.google.com/blog/products/data-analytics/knowledge-catalog-self-learning-context-enrichment-for-ai-agents/",
+          "why": "Preview announcement."
+        },
+        { "url": "https://www.figma.com/blog/lufthansa-figma-make/", "why": "Customer story." },
+        {
+          "url": "https://deepmind.google/blog/beyond-tree-cover-mapping-the-worlds-forest-types/",
+          "why": "Research promo, off-core."
+        },
+        { "url": "https://blog.cloudflare.com/k-isms/", "why": "Compliance certification." },
+        { "url": "https://blog.duolingo.com/how-to-castle-in-chess/", "why": "Content marketing." },
+        {
+          "url": "https://openai.com/index/forward-deployed-engineering-means",
+          "why": "Role description, no engineering content."
+        },
+        {
+          "url": "https://bun.com/blog/bun-v1.4.4",
+          "why": "Release notes with perf bullets; still a changelog."
+        },
+        {
+          "url": "https://stripe.com/blog/trends-from-money20-20-2026-the-rise-of-hidden-financial-services",
+          "why": "Industry trends."
+        },
+        { "url": "https://discord.com/blog/discord-update-october-22-2026", "why": "Changelog." },
+        {
+          "url": "https://www.datadoghq.com/blog/cost-agent-observability/",
+          "why": "Product page."
+        },
+        {
+          "url": "https://www.elastic.co/blog/elastic-audi-revolut-f1-team-partnership",
+          "why": "Sponsorship announcement."
+        },
+        {
+          "url": "https://openai.com/index/uber-chatgpt-work-rollout",
+          "why": "Customer case study."
+        },
+        {
+          "url": "https://vercel.com/changelog/deploy-without-an-account-using-vercel-cli",
+          "why": "Changelog."
+        },
+        {
+          "url": "https://nodejs.org/en/blog/vulnerability/october-2026-security-releases",
+          "why": "Security release notes."
+        },
+        {
+          "url": "https://openai.com/index/broad-access-through-consistent-standards",
+          "why": "Policy."
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/5-production-challenges-in-multi-agent-systems-and-how-deep-insight-solved-them/",
+          "why": "Vendor listicle with a case study."
+        },
+        {
+          "url": "https://aws.amazon.com/blogs/machine-learning/how-rescale-built-an-ai-triage-agent-with-strands-agents-and-ai-dlc/",
+          "why": "Vendor case study."
+        },
+        { "url": "https://allenai.org/blog/planteur", "why": "Benchmark release, off-core." }
+      ],
+      "topics": [
+        {
+          "id": "agent-compute-engine",
+          "urls": [
+            "https://cloud.google.com/blog/topics/ai-infrastructure/agent-compute-engine-deep-dive/",
+            "https://cloud.google.com/blog/topics/ai-infrastructure/introducing-agent-compute-engine-and-expanded-agent-governance/"
+          ]
+        }
+      ]
+    },
+    "pool-4": {
+      "picks": [
+        {
+          "url": "https://huggingface.co/blog/nvidia/kumo-relational",
+          "why": "Relational learning without training: a substantive technique claim."
+        },
+        {
+          "url": "https://huggingface.co/blog/Dharma-AI/vocabx-vocabulary-specialization",
+          "why": "77% inference-cost cut with a concrete mechanism (vocabulary specialisation)."
+        },
+        {
+          "url": "https://huggingface.co/blog/amazon/profiling-torchneuron-part-1",
+          "why": "System-level profiling on a non-NVIDIA accelerator."
+        },
+        {
+          "url": "https://github.blog/engineering/architecture-optimization/the-bridge-to-agent-scale-git-infrastructure/",
+          "why": "Deep storage/consistency architecture at extreme scale."
+        },
+        {
+          "url": "https://cloud.google.com/blog/products/containers-kubernetes/zenteiq-scales-physical-ai-inference-4x-with-gke-and-llm-d/",
+          "why": "Measured 4x batch-inference result with the serving stack behind it."
+        },
+        {
+          "url": "https://blog.cloudflare.com/full-transaction-waf/",
+          "why": "Request/response correlation in a WAF: real design and detection reasoning."
+        },
+        {
+          "url": "https://stackoverflow.blog/2026/10/21/survey-says-you-ll-swap-the-model-but-everything-you-build-around-it-is-staying-put/",
+          "why": "Survey data on model lock-in, with numbers."
+        },
+        {
+          "url": "https://cloud.google.com/blog/products/identity-security/responding-to-core-php-vulnerabilities-cve-2026-109618-cve-2026-109619/",
+          "why": "Incident response with CVE detail and remediation guidance."
+        },
+        {
+          "url": "https://blog.cloudflare.com/php-vulnerabilities-waf-protection/",
+          "why": "Same event, different angle: how the mitigation rule was built."
+        },
+        {
+          "url": "https://developer.nvidia.com/blog/design-proteins-with-rfd4-proteina-using-reward-guided-inference-time-search/",
+          "why": "Search formulation with a combinatorial argument; deep technical content."
+        }
+      ],
+      "traps": [
+        {
+          "url": "https://www.anthropic.com/news/enterprise-frontier-safeguards",
+          "why": "Policy announcement, no teaser."
+        },
+        {
+          "url": "https://www.scientificamerican.com/article/physicists-trap-a-single-antimatter-particle-for-a-month/",
+          "why": "Physics, off-topic."
+        },
+        {
+          "url": "https://www.anthropic.com/news/christopher-stubbs-joins-long-term-benefit-trust",
+          "why": "Governance appointment."
+        },
+        { "url": "https://openai.com/index/att-legal", "why": "Customer case study." },
+        {
+          "url": "https://vercel.com/changelog/routing-middleware-now-supports-python",
+          "why": "Changelog."
+        },
+        {
+          "url": "https://stackoverflow.blog/2026/10/21/building-immersive-virtual-economies-an-introduction-to-kursarscript-kspl/",
+          "why": "Esoteric language intro, low transferable value."
+        },
+        {
+          "url": "https://research.google/blog/empowering-frontline-maternal-care-with-ai-assisted-ultrasound/",
+          "why": "Applied research promo, off-core."
+        },
+        {
+          "url": "https://cloud.google.com/blog/products/data-analytics/analyze-unstructured-data-in-bigquery-with-objectref/",
+          "why": "GA feature announcement."
+        },
+        {
+          "url": "https://www.microsoft.com/en-us/research/blog/solving-a-31-year-old-grand-challenge-in-mathematics-the-kls-conjecture/",
+          "why": "Mathematics result, off-topic for an engineering digest."
+        },
+        {
+          "url": "https://grafana.com/blog/spend-less-time-on-operational-busywork-and-resolve-incidents-faster-with-grafana-workflows/",
+          "why": "Product page."
+        },
+        {
+          "url": "https://huggingface.co/blog/ibm-granite/granite-speech-5",
+          "why": "Model release."
+        },
+        {
+          "url": "https://openai.com/index/chatgpt-ads-expands-26-new-countries",
+          "why": "Business news."
+        },
+        {
+          "url": "https://mistral.ai/news/mistral-nvidia-ai-for-industrial-engineering/",
+          "why": "Partnership announcement."
+        },
+        {
+          "url": "https://cloud.google.com/blog/products/ai-machine-learning/google-cloud-brings-openai-models-to-customers/",
+          "why": "Partnership announcement."
+        },
+        {
+          "url": "https://openai.com/index/openai-models-google-cloud",
+          "why": "Partnership announcement."
+        },
+        {
+          "url": "https://www.anthropic.com/news/public-benefit-fund",
+          "why": "Governance/funding."
+        },
+        {
+          "url": "https://cloud.google.com/blog/topics/public-sector/google-public-sector-increases-partner-investments-for-frontline-adoption/",
+          "why": "Partner marketing."
+        },
+        { "url": "https://cohere.com/blog/north-mini-code", "why": "Product announcement." },
+        { "url": "https://cohere.com/blog/transcribe-arabic", "why": "Product announcement." },
+        {
+          "url": "https://cohere.com/blog/introducing-north-automations-ai-workflows",
+          "why": "Product announcement."
+        },
+        { "url": "https://cohere.com/blog/parse", "why": "Product announcement." },
+        { "url": "https://cohere.com/blog/north-small-translate", "why": "Product announcement." },
+        { "url": "https://cohere.com/blog/compass-cloud-beta", "why": "Beta announcement." },
+        { "url": "https://cohere.com/blog/can-ai-understand-culture", "why": "Marketing essay." },
+        {
+          "url": "https://cohere.com/blog/introducing-confidential-computing-on-cohere-model-vault",
+          "why": "Product announcement."
+        },
+        {
+          "url": "https://cohere.com/blog/inside-cohere-model-vault-building-verifiable-confidential-ai-inference",
+          "why": "Vendor architecture marketing."
+        },
+        {
+          "url": "https://cohere.com/blog/the-future-of-work-debate-has-an-evidence-problem",
+          "why": "Opinion."
+        },
+        { "url": "https://cohere.com/blog/embed-5", "why": "Model release announcement." },
+        { "url": "https://cohere.com/blog/introducing-north-2", "why": "Product announcement." }
+      ],
+      "topics": [
+        {
+          "id": "php2shell-waf",
+          "urls": [
+            "https://cloud.google.com/blog/products/identity-security/responding-to-core-php-vulnerabilities-cve-2026-109618-cve-2026-109619/",
+            "https://blog.cloudflare.com/php-vulnerabilities-waf-protection/"
+          ]
+        },
+        {
+          "id": "openai-on-google-cloud",
+          "urls": [
+            "https://cloud.google.com/blog/products/ai-machine-learning/google-cloud-brings-openai-models-to-customers/",
+            "https://openai.com/index/openai-models-google-cloud"
+          ]
+        }
+      ]
+    }
+  }
+}

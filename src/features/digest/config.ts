@@ -173,9 +173,18 @@ export const MANUAL_SOURCE_TIMEOUT_MS = 2_500;
 export const BLURB_CHARS = 280;
 
 export const DEFAULT_MODEL = "meta/muse-spark-1.3-contributor";
+/** The picker is a judgement task: a faster model scores better than the summariser on
+ * the same candidate pools, and extra reasoning effort makes it worse. */
+export const DEFAULT_PICK_MODEL = "anthropic/claude-haiku-5.5";
 /** Cloud LLMs answer in seconds; 300s is a generous ceiling, not a target. */
 export const LLM_TIMEOUT_MS = 300_000;
-export const LLM_MAX_TOKENS = 8000; // muse-spark reasons before answering; leave budget for the JSON
+export const LLM_MAX_TOKENS = 8000; // reasoning models think before answering; leave budget for the JSON
+/** Picking is shallow judgement: measured best at low effort (0.63 utility vs 0.51 shipped).
+ * Higher effort picks more traps and costs 2-4x the latency. */
+export const PICK_REASONING_EFFORT = "low";
+/** Summarising is a reading task: medium effort beat low by 0.18 judge points and
+ * high by only 0.07 at 1.5x the latency, so medium is the knee. */
+export const SUMMARY_REASONING_EFFORT = "medium";
 /** Per-call ceiling for Tavily; the legacy port used 30s so refresh never hangs. */
 export const TAVILY_TIMEOUT_MS = 30_000;
 
@@ -202,13 +211,10 @@ Rules:
 - difficulty: how hard the post is for a generalist software engineer.
 - Use ONLY the post text. Never invent facts or numbers.`;
 
-export const SELECT_PROMPT = `You pick the most interesting posts for a backend-leaning generalist
-developer who is learning advanced engineering topics.
+export const SELECT_PROMPT = `You pick the most interesting posts for a backend-leaning generalist developer who is learning advanced engineering topics.
 
-Return ONLY valid JSON of this shape: {"picked": ["<url>", ...]}
-Pick at most {n} urls from the candidates. Prefer deep dives, design writeups and
-war stories. Pick an announcement only when it carries real engineering substance:
-a major release, a significant design or architecture change, a new capability
-explained with technical detail, or measured results. Skip routine product
-marketing, funding news, minor version bumps, and listicles. Spread picks across
-different blogs.`;
+First score each candidate privately, without writing the scores out: depth (0-3), substance (0-3), and novelty (0-3). A changelog, release note, funding, hiring, partnership, policy, listicle, interview, podcast, vendor case study, or off-topic post scores 0 on depth no matter how prominent the company is. High Hacker News points are not evidence of depth.
+
+Then pick the {n} highest-scoring posts, best first, breaking ties toward the less famous blog.
+
+Return ONLY valid JSON of this shape: {"picked": ["<url>", ...]}`;

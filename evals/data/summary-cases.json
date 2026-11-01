@@ -1,0 +1,186 @@
+{
+  "note": "Summary eval cases. Article text was extracted once with Tavily and frozen under data/text/ so every run sees identical input. 'facts' are must-mention claims written by reading each article: a fact counts as covered when any regex matches the tldr + key_points. They are deliberately concrete (numbers, named mechanisms) so a vague or padded summary cannot score well.",
+  "cases": [
+    {
+      "id": "cloudflare-range",
+      "title": "Origin Range Requests: Serving large files without range-request tuning",
+      "url": "https://blog.cloudflare.com/origin-range-requests/",
+      "text": "text/cloudflare-range.txt",
+      "facts": [
+        { "id": "http-206", "patterns": ["\\b206\\b", "partial content", "range header"] },
+        {
+          "id": "fixed-chunks",
+          "patterns": ["fixed[- ]size chunk", "chunk boundar", "aligned.{0,30}chunk", "chunk size"]
+        },
+        {
+          "id": "r2-tffb-halved",
+          "patterns": [
+            "(p99|time to first byte|ttfb).{0,70}(half|halve|50\\s?%)",
+            "(half|halve).{0,50}(p99|time to first byte|ttfb)"
+          ]
+        },
+        { "id": "tiered-6pct", "patterns": ["6\\s?%"] },
+        { "id": "128-mib", "patterns": ["128\\s?mib"] },
+        {
+          "id": "coordinator",
+          "patterns": [
+            "coordinator",
+            "in[- ]flight",
+            "combin(e|es|ing).{0,50}(cached|disk|upstream)"
+          ]
+        },
+        { "id": "if-range", "patterns": ["if-range", "entity tag", "\\betag\\b"] }
+      ]
+    },
+    {
+      "id": "netflix-quasar",
+      "title": "Beyond API Compatibility: Building a Tool to Measure the Blast Radius of Library Changes",
+      "url": "https://netflixtechblog.com/beyond-api-compatibility-building-a-tool-to-measure-the-blast-radius-of-library-changes-9474f2fd4f90",
+      "text": "text/netflix-titus.txt",
+      "facts": [
+        { "id": "quasar", "patterns": ["quasar"] },
+        { "id": "scip", "patterns": ["scip"] },
+        {
+          "id": "blast-radius",
+          "patterns": ["blast radius", "consumer impact", "affected repositor", "affected repos"]
+        },
+        { "id": "parquet-athena", "patterns": ["parquet", "athena"] },
+        { "id": "137", "patterns": ["137"] },
+        {
+          "id": "compat-vs-reach",
+          "patterns": [
+            "compatib.{0,70}(reach|impact)",
+            "(reach|impact).{0,70}compatib",
+            "separate.{0,40}compatib"
+          ]
+        },
+        {
+          "id": "evidence-quality",
+          "patterns": [
+            "no (observed )?(usages?|references?)",
+            "stale",
+            "freshness",
+            "truncat",
+            "incomplete index"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rqlite-twelve-years",
+      "title": "Twelve years of distributed SQLite",
+      "url": "https://philipotoole.com/twelve-years-of-distributed-sqlite/",
+      "text": "text/otoole-distributed-sqlite.txt",
+      "facts": [
+        { "id": "rqlite", "patterns": ["rqlite"] },
+        { "id": "raft", "patterns": ["raft"] },
+        {
+          "id": "cp-leader",
+          "patterns": ["\\bcp\\b", "leader.{0,60}majority", "majority.{0,60}leader"]
+        },
+        { "id": "2014", "patterns": ["2014"] },
+        { "id": "litestream", "patterns": ["litestream"] },
+        {
+          "id": "three-corners",
+          "patterns": [
+            "three (design )?(corners|questions|approaches)",
+            "consensus.{0,90}(stream|merge)",
+            "stream.{0,70}merge"
+          ]
+        },
+        { "id": "other-projects", "patterns": ["dqlite", "cr-sqlite", "crdt", "libsql", "turso"] }
+      ]
+    },
+    {
+      "id": "jellyfish-productivity",
+      "title": "Study Finds AI-generated Code Fails to Boost Productivity Due to Downstream Bottlenecks",
+      "url": "https://www.infoq.com/news/2026/10/jellyfish-ai-productivity/",
+      "text": "text/infoq-jellyfish.txt",
+      "facts": [
+        { "id": "718-firms", "patterns": ["718"] },
+        { "id": "300m-events", "patterns": ["300\\s?million", "300m", "700,?000"] },
+        {
+          "id": "loc-increase",
+          "patterns": [
+            "12\\s?%.{0,50}(lines|loc|code)",
+            "(lines|loc|code).{0,50}12\\s?%",
+            "30\\s?%.{0,50}(lines|loc|code)",
+            "(lines|loc|code).{0,50}30\\s?%"
+          ]
+        },
+        { "id": "issues-12", "patterns": ["12\\s?%.{0,70}issue", "issue.{0,70}12\\s?%"] },
+        { "id": "review-49", "patterns": ["49\\s?%"] },
+        { "id": "comments-53", "patterns": ["53\\s?%"] },
+        { "id": "writing-time-30-40", "patterns": ["30\\s?[-–]\\s?40\\s?%", "30 to 40\\s?%"] },
+        { "id": "bottleneck", "patterns": ["bottleneck", "downstream"] }
+      ]
+    },
+    {
+      "id": "shopify-remote-dev",
+      "title": "We gave AI agents a mobile dev environment",
+      "url": "https://shopify.engineering/remote-dev",
+      "text": "text/shopify-remote-dev.txt",
+      "facts": [
+        { "id": "remote-dev", "patterns": ["remote dev"] },
+        { "id": "river", "patterns": ["river"] },
+        {
+          "id": "warm-mac-pool",
+          "patterns": [
+            "warm macs",
+            "pool of (warm )?macs",
+            "fleet of remote macs",
+            "mac pool",
+            "pool of macs"
+          ]
+        },
+        { "id": "nested-virtualization", "patterns": ["nested virtuali"] },
+        { "id": "30-minute-setup", "patterns": ["30\\s?min", "thirty minutes"] },
+        { "id": "61pct", "patterns": ["61\\s?%"] },
+        { "id": "live-preview", "patterns": ["websocket", "live preview"] },
+        { "id": "ssh-tmux", "patterns": ["\\bssh\\b", "tmux"] }
+      ]
+    },
+    {
+      "id": "goose-language",
+      "title": "The Goose Programming Language",
+      "url": "https://aardappel.github.io/goose/",
+      "text": "text/aardappel-goose.txt",
+      "facts": [
+        {
+          "id": "no-heap",
+          "patterns": [
+            "no (heap|allocator|garbage collection|gc)",
+            "without a heap",
+            "heap allocator"
+          ]
+        },
+        { "id": "data-stacks", "patterns": ["data stack", "bump pointer", "scope exit"] },
+        { "id": "speed-vs-cpp", "patterns": ["3\\.3x", "3\\.5\\dx", "3\\.51x", "3\\.54x"] },
+        { "id": "memory-1.9x", "patterns": ["1\\.9x", "1\\.95x"] },
+        { "id": "29-bytes", "patterns": ["29 bytes", "160 bytes", "153 bytes"] },
+        {
+          "id": "c-output",
+          "patterns": ["one c file", "single c file", "tinycc", "emits.{0,20}c file"]
+        },
+        {
+          "id": "relative-refs",
+          "patterns": [
+            "relative reference",
+            "position[- ]independent",
+            "narrow (offset|link|reference)",
+            "from_bytes"
+          ]
+        },
+        {
+          "id": "limits",
+          "patterns": [
+            "whole[- ]program",
+            "no function pointers",
+            "recursi",
+            "no escaping closures"
+          ]
+        }
+      ]
+    }
+  ]
+}

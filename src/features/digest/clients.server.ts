@@ -5,6 +5,7 @@ import {
   LLM_TIMEOUT_MS,
   MAX_CHARS,
   OPENROUTER_URL,
+  SUMMARY_REASONING_EFFORT,
   TAVILY_EXTRACT_URL,
   TAVILY_TIMEOUT_MS,
 } from "#/features/digest/config";
@@ -77,13 +78,28 @@ async function postJson(
   }
 }
 
-export type ChatCompletion = (prompt: string, text: string) => Promise<unknown>;
+export type ChatCompletion = (
+  prompt: string,
+  text: string,
+  options?: ChatOptions
+) => Promise<unknown>;
+
+export interface ChatOptions {
+  /** Defaults to DIGEST_MODEL, or DEFAULT_MODEL. */
+  model?: string;
+  /** Defaults to SUMMARY_REASONING_EFFORT. */
+  effort?: string;
+}
 
 /** OpenAI-compatible chat call. It resolves to parsed JSON. */
-export async function completeJson(prompt: string, text: string): Promise<unknown> {
+export async function completeJson(
+  prompt: string,
+  text: string,
+  options: ChatOptions = {}
+): Promise<unknown> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) throw new Error("OPENROUTER_API_KEY is not set");
-  const model = process.env.DIGEST_MODEL?.trim() || DEFAULT_MODEL;
+  const model = options.model ?? (process.env.DIGEST_MODEL?.trim() || DEFAULT_MODEL);
   const data = await postJson(
     OPENROUTER_URL,
     apiKey,
@@ -96,9 +112,8 @@ export async function completeJson(prompt: string, text: string): Promise<unknow
       temperature: 0.3,
       max_tokens: LLM_MAX_TOKENS,
       response_format: { type: "json_object" },
-      // muse-spark is a reasoning model. Capping effort keeps the reasoning spend low
-      // without hurting summary quality. Measurements show 500 or more reasoning tokens even for trivia.
-      reasoning: { effort: "low" },
+      // Reasoning models think before answering. The effort is tuned per task: see config.ts.
+      reasoning: { effort: options.effort ?? SUMMARY_REASONING_EFFORT },
     },
     LLM_TIMEOUT_MS,
     "LLM request"
