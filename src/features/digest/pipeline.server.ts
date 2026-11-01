@@ -997,15 +997,46 @@ export async function fetchCandidates(
 
 const PickerOutput = z.object({ picked: z.array(z.unknown()).optional() });
 
-/** Match key for picker output. Models drop `www.`, query strings, and trailing slashes
- * when they copy a URL, so compare the meaningful parts and keep the candidate's own URL.
- * Path case is folded because the key only routes back to a candidate, never to a fetch. */
+/** Query parameters that never select a different page. Models drop these when they copy
+ * a URL, so they are ignored for matching. Every other parameter is kept, because it may
+ * identify a different article. */
+const TRACKING_PARAMS = new Set([
+  "_hsenc",
+  "_hsmi",
+  "campaign",
+  "cmp",
+  "fbclid",
+  "gclid",
+  "igshid",
+  "mc_cid",
+  "mc_eid",
+  "msclkid",
+  "ref",
+  "source",
+  "spm",
+  "yclid",
+]);
+
+function isTrackingParam(name: string): boolean {
+  const lower = name.toLowerCase();
+  return lower.startsWith("utm_") || TRACKING_PARAMS.has(lower);
+}
+
+/** Match key for picker output. Models drop `www.`, tracking parameters, and trailing
+ * slashes when they copy a URL, so compare the meaningful parts and keep the candidate's
+ * own URL. Path case is folded because the key only routes back to a candidate, never to
+ * a fetch. */
 export function pickKey(raw: string): string {
   try {
     const url = new URL(raw.trim());
     const host = url.hostname.toLowerCase().replace(/^www\./, "");
     const path = url.pathname.replace(/\/+$/, "") || "/";
-    return `${host}${path}`.toLowerCase();
+    const query = [...url.searchParams.entries()]
+      .filter(([name]) => !isTrackingParam(name))
+      .map(([name, value]) => `${name.toLowerCase()}=${value}`)
+      .toSorted()
+      .join("&");
+    return `${host}${path}${query ? `?${query}` : ""}`.toLowerCase();
   } catch {
     return raw.trim().toLowerCase();
   }
@@ -1034,7 +1065,18 @@ export async function selectInteresting(
             .map(pickKey)
         : []
     );
-    const chosen = candidates.filter(a => picked.has(pickKey(a.url))).slice(0, n);
+    // A key shared by two different articles is ambiguous: refuse to guess which one the
+    // model meant rather than returning the wrong post.
+    const byKey = new Map<string, CandidateArticle | null>();
+    for (const candidate of candidates) {
+      const key = pickKey(candidate.url);
+      const existing = byKey.get(key);
+      if (existing === undefined) byKey.set(key, candidate);
+      else if (existing !== null && existing.url !== candidate.url) byKey.set(key, null);
+    }
+    const chosen = candidates
+      .filter(a => picked.has(pickKey(a.url)) && byKey.get(pickKey(a.url)) === a)
+      .slice(0, n);
     if (chosen.length > 0) {
       // The picker may match fewer than n; top up with the newest remaining.
       if (chosen.length < n) {

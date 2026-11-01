@@ -270,6 +270,38 @@ describe("selectInteresting", () => {
     ]);
   });
 
+  it("keeps meaningful query parameters apart", async () => {
+    const web = [
+      article({ url: "https://example.test/post?id=1", title: "one" }),
+      article({ url: "https://example.test/post?id=2", title: "two" }),
+      article({ url: "https://example.test/other", title: "other" }),
+    ];
+    const got = await selectInteresting(web, 2, () =>
+      Promise.resolve({ picked: ["https://example.test/post?id=2"] })
+    );
+    // The pick leads, so a key collision would surface as `?id=1` winning on pool order.
+    expect(got[0].url).toBe("https://example.test/post?id=2");
+  });
+
+  it("refuses an ambiguous key instead of returning the wrong article", async () => {
+    const quiet = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    try {
+      // Both candidates normalise to the same key once the tracking parameter is dropped.
+      const web = [
+        article({ url: "https://example.test/other", title: "other" }),
+        article({ url: "https://example.test/post?id=1&utm_source=a", title: "one" }),
+        article({ url: "https://example.test/post?id=1&utm_source=b", title: "two" }),
+      ];
+      const got = await selectInteresting(web, 1, () =>
+        Promise.resolve({ picked: ["https://example.test/post?id=1"] })
+      );
+      // Neither ambiguous candidate is returned; the newest post fills the slot instead.
+      expect(got.map(a => a.url)).toEqual(["https://example.test/other"]);
+    } finally {
+      quiet.mockRestore();
+    }
+  });
+
   it("asks the picker model at low effort", async () => {
     const seen: unknown[] = [];
     await selectInteresting(cands, 2, (_prompt, _text, options) => {
