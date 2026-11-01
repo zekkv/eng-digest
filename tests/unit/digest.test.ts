@@ -223,6 +223,7 @@ describe("pickKey", () => {
 
   it("keeps query values case-sensitive and unambiguous", () => {
     expect(pickKey("https://ex.test/p?id=ABC")).not.toBe(pickKey("https://ex.test/p?id=abc"));
+    expect(pickKey("https://ex.test/p?ID=ABC")).not.toBe(pickKey("https://ex.test/p?id=ABC"));
     expect(pickKey("https://ex.test/p?x=a%26y=b")).not.toBe(pickKey("https://ex.test/p?x=a&y=b"));
   });
 });
