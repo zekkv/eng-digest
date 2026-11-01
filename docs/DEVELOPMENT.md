@@ -51,7 +51,7 @@ This guide covers the local development environment, scripts catalog, environmen
 | -------------------- | ----------------------- | ------------------------------------------------------------------------------------ |
 | `OPENROUTER_API_KEY` | ✅                      | Powers the LLM calls that pick and summarize.                                        |
 | `TAVILY_API_KEY`     | ✅                      | Extracts article text for summaries.                                                 |
-| `DIGEST_MODEL`       | Optional                | Overrides the summariser model. The default is `meta/muse-spark-1.3-contributor`.   |
+| `DIGEST_MODEL`       | Optional                | Overrides the summariser model. The default is `meta/muse-spark-1.3-contributor`.    |
 | `DIGEST_PICK_MODEL`  | Optional                | Overrides the picker model. The default is `anthropic/claude-haiku-5.5`.             |
 | `DIGEST_PICK_COUNT`  | Optional                | Overrides the number of candidate articles that the daily run picks (default: `10`). |
 | `DIGEST_DNS_CHECK`   | Optional                | Set to `0` to skip DNS checks on fetched hosts. Unit tests set it to `0`.            |

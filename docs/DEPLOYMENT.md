@@ -17,6 +17,6 @@ The `preview` job in `ci.yml` deploys a Vercel preview for a pull request to `ma
 
 Set the same runtime variables for the Vercel Preview environment as for Production. Previews share the production Upstash database. Preview URLs require a Vercel login.
 
-For the `.github/workflows/digest-daily.yml` daily job, configure these GitHub repository secrets: `OPENROUTER_API_KEY`, `TAVILY_API_KEY`, and `KV_REST_API_URL` with `KV_REST_API_TOKEN`. You can use `UPSTASH_REDIS_REST_URL` with `UPSTASH_REDIS_REST_TOKEN` instead. You can also set optional repository variables `DIGEST_MODEL` and `DIGEST_PICK_COUNT`.
+For the `.github/workflows/digest-daily.yml` daily job, configure these GitHub repository secrets: `OPENROUTER_API_KEY`, `TAVILY_API_KEY`, and `KV_REST_API_URL` with `KV_REST_API_TOKEN`. You can use `UPSTASH_REDIS_REST_URL` with `UPSTASH_REDIS_REST_TOKEN` instead. You can also set optional repository variables `DIGEST_MODEL`, `DIGEST_PICK_MODEL`, and `DIGEST_PICK_COUNT`.
 
 Without the Upstash variables on Vercel, the app stops with a clear configuration error. It does not write to the short-lived filesystem.
