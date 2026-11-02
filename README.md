@@ -8,7 +8,7 @@ The source list starts from seeds in `config.ts`. It grows from the posts that t
 
 ### Prerequisites
 
-- Install [Bun](https://bun.sh/) version 1.4.2 or later.
+- Install [Bun](https://bun.sh/) version 1.4.4 or later.
 - Get an [OpenRouter](https://openrouter.ai/) API key and a [Tavily](https://tavily.com/) API key.
 
 ### Setup

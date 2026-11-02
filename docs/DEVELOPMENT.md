@@ -4,7 +4,7 @@ This guide covers the local development environment, scripts catalog, environmen
 
 ## Prerequisites
 
-- Install **[Bun](https://bun.sh/)** version 1.4.2 or later.
+- Install **[Bun](https://bun.sh/)** version 1.4.4 or later.
 - Get an **OpenRouter** API key and a **Tavily** API key. The digest backend needs them.
 
 ## Local Setup
@@ -184,19 +184,19 @@ The remaining prompt variants (`summary-tight`, `summary-minimal`) are untested:
   bun run lint:check
   bun run lint:fix
   ```
-- **[Oxfmt](https://oxc.rs/docs/guide/usage/formatter.html)**: a fast formatter for code and Markdown.
+- **[`bun fmt`](https://bun.com/docs/format)**: Bun's built-in formatter for code and Markdown. It reads `.oxfmtrc.json` and prints the same output as oxfmt.
   ```bash
   bun run format:check
   bun run format:fix
   ```
-- **TypeScript**:
+- **[`bun check`](https://bun.com/docs/runtime/check)**: Bun's built-in type checker. It reads `tsconfig.json` and reports the same errors as `tsc` from TypeScript 7.
   ```bash
   bun run type:check
   ```
 
 ### Pre-commit Hooks
 
-[Lefthook](https://github.com/evilmartians/lefthook) runs automatically on `git commit`. It runs `oxlint --fix` and `oxfmt --write` on staged files:
+[Lefthook](https://github.com/evilmartians/lefthook) runs automatically on `git commit`. It runs `oxlint --fix` and `bun fmt` on staged files:
 
 ```bash
 bun run prepare # reinstalls hooks if needed
