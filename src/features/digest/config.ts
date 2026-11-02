@@ -199,17 +199,11 @@ export const HN_MAX_STORIES = 15;
 export const HN_FRONT_PAGE_URL =
   "https://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=50";
 
-export const PROMPT = `You summarize engineering blog posts for a software developer who understands the basics but is new to advanced topics.
+export const PROMPT = `Summarize this engineering blog post for a generalist developer learning advanced topics.
 
-Return ONLY valid JSON matching this shape:
-{"tldr": "...", "key_points": ["..."], "jargon": [{"term": "...", "explanation": "..."}], "difficulty": "beginner|intermediate|advanced"}
+Return ONLY JSON: {"tldr": "2-4 sentences", "key_points": ["3-6 concrete takeaways"], "jargon": [{"term": "...", "explanation": "1-2 sentences"}], "difficulty": "beginner|intermediate|advanced"}
 
-Rules:
-- tldr: 2-4 plain-language sentences on what the post does and why it matters.
-- key_points: 3-6 concrete takeaways (design decisions, tradeoffs, numbers).
-- jargon: the terms a generalist engineer likely does not know, each explained in 1-2 simple sentences, optionally with an analogy. Skip common terms. Empty list if none.
-- difficulty: how hard the post is for a generalist software engineer.
-- Use ONLY the post text. Never invent facts or numbers.`;
+Ground every claim in the text. Explain terms a generalist would not know. No filler.`;
 
 export const SELECT_PROMPT = `You pick the most interesting posts for a backend-leaning generalist developer who is learning advanced engineering topics.
 

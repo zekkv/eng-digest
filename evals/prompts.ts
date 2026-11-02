@@ -94,12 +94,12 @@ Rules:
 - Use ONLY the post text. Every number must appear in the post. Never invent facts, benchmarks, or quotes.`,
   },
   {
-    id: "summary-minimal",
-    note: "Shortest prompt; tests whether the long rule list is scaffolding the model does not need.",
+    id: "summary-minimal-grounded",
+    note: "The short prompt plus the explicit no-invention rule, to keep the safety rail.",
     text: `Summarize this engineering blog post for a generalist developer learning advanced topics.
 
 Return ONLY JSON: {"tldr": "2-4 sentences", "key_points": ["3-6 concrete takeaways"], "jargon": [{"term": "...", "explanation": "1-2 sentences"}], "difficulty": "beginner|intermediate|advanced"}
 
-Ground every claim in the text. Explain terms a generalist would not know. No filler.`,
+Use ONLY the post text. Every number must appear in the post. Never invent facts, benchmarks, or quotes. Explain terms a generalist would not know. No filler.`,
   },
 ];
