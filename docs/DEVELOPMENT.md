@@ -155,16 +155,16 @@ Higher reasoning effort did not help picking: muse improved only 0.40 -> 0.44 at
 
 Summaries, 12 samples per cell, blind judge (1-5):
 
-| summary model              | effort | judge      | facts    | jargon ok | p50 |
-| -------------------------- | ------ | ---------- | -------- | --------- | --- |
-| muse-spark-1.3-contributor | low    | 4.55       | 0.88     | 0.79      | 17s |
-| muse-spark-1.3-contributor | medium | **4.73**   | **0.91** | **0.89**  | 27s |
-| muse-spark-1.3-contributor | high   | 4.80       | 0.89     | 0.86      | 41s |
-| deepseek-v4.1-flash        | high   | 4.73       | 0.90     | 0.77      | 39s |
-| gemini-3.8-flash           | high   | 4.38       | 0.81     | 0.71      | 28s |
-| claude-haiku-5.5           | medium | not judged | 0.83     | 0.60      | 11s |
+| summary model              | effort | judge    | facts    | jargon ok | p50 |
+| -------------------------- | ------ | -------- | -------- | --------- | --- |
+| muse-spark-1.3-contributor | low    | 4.55     | 0.88     | 0.79      | 17s |
+| muse-spark-1.3-contributor | medium | **4.73** | **0.91** | **0.89**  | 27s |
+| muse-spark-1.3-contributor | high   | 4.80     | 0.89     | 0.86      | 41s |
+| deepseek-v4.1-flash        | high   | 4.73     | 0.90     | 0.77      | 39s |
+| gemini-3.8-flash           | high   | 4.38     | 0.81     | 0.71      | 28s |
+| claude-haiku-5.5           | medium | 4.64     | 0.79     | 0.54      | 9s  |
 
-Summaries want more reasoning than picking does: medium is the knee. Haiku is not used for summaries because its jargon quality was far worse (0.60 vs 0.89) and its low and high efforts produced malformed summaries (valid 0.83 and 0.75). Those haiku cells are not judge-scored, so that verdict rests on the deterministic metrics.
+Summaries want more reasoning than picking does: medium is the knee. Haiku is three times faster but is not used for summaries: on the shipped short prompt it scored judge 4.64 against muse's 4.76, with fewer facts (0.79 vs 0.88), weaker jargon (0.54 vs 0.70), and one malformed summary. Its low and high efforts were worse still (valid 0.83 and 0.75). Its numeric grounding looked alarming at 0.81, but every miss was a rounded benchmark figure, not an invented one.
 
 Summary prompt, 18 samples per cell on the shipped model at medium effort:
 
