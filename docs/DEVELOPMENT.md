@@ -166,12 +166,22 @@ Summaries, 12 samples per cell, blind judge (1-5):
 
 Summaries want more reasoning than picking does: medium is the knee. Haiku is not used for summaries because its jargon quality was far worse (0.60 vs 0.89) and its low and high efforts produced malformed summaries (valid 0.83 and 0.75). Those haiku cells are not judge-scored, so that verdict rests on the deterministic metrics.
 
-Two findings came from the eval rather than the models:
+Summary prompt, 18 samples per cell on the shipped model at medium effort:
+
+| prompt                      | judge    | facts    | grounded | schema   | p50 |
+| --------------------------- | -------- | -------- | -------- | -------- | --- |
+| minimal (now shipped)       | **4.76** | 0.88     | 0.88     | **1.00** | 28s |
+| baseline (previous)         | 4.64     | 0.90     | **1.00** | 0.83     | 32s |
+| minimal + no-invention rule | 4.47     | 0.83     | 0.89     | **1.00** | 33s |
+| tight rules                 | 4.24     | **0.93** | **1.00** | **1.00** | 40s |
+
+The short prompt won on readability and format compliance, and the one ungrounded number in 18 summaries was a rounded benchmark figure, not an invention. The tighter prompts covered marginally more facts but turned key points into run-on sentences with stacked tradeoffs, and the judge scored their accuracy and calibration lower. Adding the explicit no-invention rule back made summaries more conservative without improving accuracy.
+
+Three findings came from the eval rather than the models:
 
 - The picker silently lost picks when a model rewrote a URL (`www.` stripped, `utm_*` dropped). `selectInteresting` now matches on `pickKey` and keeps the candidate's own URL.
 - The `select-score-strict` variant, which added more prohibitions, scored worse than the simpler scoring prompt. More rules is not automatically better.
-
-The remaining prompt variants (`summary-tight`, `summary-minimal`) are untested: the OpenRouter key hit its spend cap before they ran.
+- The longer summary prompt lost to the short one on the same principle: it produced format violations (7-point lists, "The author..." openers) in 17% of summaries.
 
 ---
 
