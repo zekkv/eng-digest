@@ -177,6 +177,8 @@ Summary prompt, 18 samples per cell on the shipped model at medium effort:
 
 The short prompt won on readability and format compliance, and the one ungrounded number in 18 summaries was a rounded benchmark figure, not an invention. The tighter prompts covered marginally more facts but turned key points into run-on sentences with stacked tradeoffs, and the judge scored their accuracy and calibration lower. Adding the explicit no-invention rule back made summaries more conservative without improving accuracy.
 
+`gpt-6-luna` was measured on the same pools with the shipped prompts. Picking at low effort scored 0.58 utility against haiku's 0.63, with a higher trap rate (16% vs 11%). Summarising at medium scored judge 4.77, level with muse, but fact coverage fell to 0.68 against 0.88: it describes benchmark results qualitatively ("faster than C++ and safe Rust") instead of quoting them (3.3x, 1.9x less memory). It is 3.5x faster and the pair would cost $0.0088/day against $0.0100, which does not justify the coverage loss for a nightly batch job.
+
 Three findings came from the eval rather than the models:
 
 - The picker silently lost picks when a model rewrote a URL (`www.` stripped, `utm_*` dropped). `selectInteresting` now matches on `pickKey` and keeps the candidate's own URL.
