@@ -36,7 +36,12 @@ import {
 } from "#/features/digest/config";
 import type { DigestFeed } from "#/features/digest/config";
 import type { ChatCompletion } from "#/features/digest/clients.server";
-import { UpstreamAuthError, completeJson, extractPageText } from "#/features/digest/clients.server";
+import {
+  UpstreamAuthError,
+  completeJson,
+  extractPageText,
+  extractPageTexts,
+} from "#/features/digest/clients.server";
 import { loadCache, mergeArticles, saveCache, withCacheLock } from "#/features/digest/store.server";
 import type {
   CandidateArticle,
@@ -1045,15 +1050,18 @@ export function pickKey(raw: string): string {
   }
 }
 
+/** The picker's view of one candidate. The eval imports it so it scores the real prompt. */
+export function candidateLine(a: CandidateArticle): string {
+  return `- ${a.url} | ${a.blog}: ${a.title} — ${a.blurb.slice(0, 180)}`;
+}
+
 /** Ask the LLM to pick the best n; fall back to newest on any failure. */
 export async function selectInteresting(
   candidates: CandidateArticle[],
   n: number,
   complete: ChatCompletion = completeJson
 ): Promise<CandidateArticle[]> {
-  const listed = candidates
-    .map(a => `- ${a.url} | ${a.blog}: ${a.title} — ${a.blurb.slice(0, 180)}`)
-    .join("\n");
+  const listed = candidates.map(candidateLine).join("\n");
   try {
     const parsed = PickerOutput.safeParse(
       await complete(SELECT_PROMPT.replace("{n}", String(n)), listed, {
@@ -1183,7 +1191,7 @@ async function withSummarySlot<T>(fn: () => Promise<T>): Promise<T> {
  * job passes `ignoreBudget` because it is the legitimate owner of the day's run. */
 export async function summarizeArticle(
   url: string,
-  options: { ignoreBudget?: boolean } = {}
+  options: { ignoreBudget?: boolean; text?: string } = {}
 ): Promise<Summary> {
   const existing = inflightSummaries.get(url);
   if (existing) return existing;
@@ -1210,7 +1218,8 @@ export async function summarizeArticle(
       }
     }
     const resolvedTitle = cache.articles.find(a => a.url === url)?.title ?? url;
-    const text = await extractPageText(url);
+    // The daily job passes text it already extracted in one batch.
+    const text = options.text || (await extractPageText(url));
     const data = await completeJson(PROMPT, `Title: ${resolvedTitle}\n\nTEXT:\n${text}`);
     const summary = normalizeSummary(data, process.env.DIGEST_MODEL?.trim() || DEFAULT_MODEL);
     // The honest read time comes from the extracted page, not the feed teaser.
@@ -1404,7 +1413,17 @@ export async function daily(force = false): Promise<{ summarized: number; pendin
     ];
     picked = await selectInteresting(candidateSlice, resolvePickCount());
     console.log(`picked ${picked.length} for today:`);
-    ok = await summarizePicked(picked);
+    // One batched extract for every pick: Tavily bills 1 credit per 5 successful URLs.
+    let texts = new Map<string, string>();
+    try {
+      texts = await extractPageTexts(picked.map(a => a.url));
+    } catch (error) {
+      // Each summary then extracts its own page, as before.
+      console.log(`batch extract failed: ${messageOf(error).slice(0, 160)}`);
+    }
+    ok = await summarizePicked(picked, article =>
+      summarizeArticle(article.url, { ignoreBudget: true, text: texts.get(article.url) })
+    );
   }
   // Stamp the day only after progress. Then a failed run retries on the next run.
   if (ok > 0 || todo.length === 0) {

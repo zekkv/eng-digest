@@ -128,22 +128,49 @@ export async function completeJson(
   return extractJson(content);
 }
 
-/** Page text through Tavily extract. It throws a readable Error when the text is missing. */
-export async function extractPageText(url: string): Promise<string> {
+/** Tavily extract accepts at most this many URLs per request. */
+const TAVILY_BATCH = 20;
+
+/** One Tavily extract request. It returns the raw result records. */
+async function extractBatch(urls: string[], timeoutMs: number): Promise<Record<string, unknown>[]> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) throw new Error("TAVILY_API_KEY is not set");
-  const data = await postJson(
-    TAVILY_EXTRACT_URL,
-    apiKey,
-    { urls: [url] },
-    TAVILY_TIMEOUT_MS,
-    `extract for ${url}`
-  );
+  const what = urls.length === 1 ? `extract for ${urls[0]}` : `extract for ${urls.length} urls`;
+  const data = await postJson(TAVILY_EXTRACT_URL, apiKey, { urls }, timeoutMs, what);
   const results = isRecord(data) && Array.isArray(data.results) ? data.results : [];
-  const first = isRecord(results[0]) ? results[0] : {};
-  const raw = typeof first.raw_content === "string" ? first.raw_content : "";
+  return results.filter(isRecord);
+}
+
+function rawContent(result: Record<string, unknown> | undefined): string {
+  return typeof result?.raw_content === "string" ? result.raw_content : "";
+}
+
+/** Page text through Tavily extract. It throws a readable Error when the text is missing. */
+export async function extractPageText(url: string): Promise<string> {
+  const raw = rawContent((await extractBatch([url], TAVILY_TIMEOUT_MS))[0]);
   if (!raw) {
     throw new Error(`could not extract article text from ${url}`);
   }
   return raw;
+}
+
+/** Page text for many URLs, batched. A URL Tavily could not read is missing from the map.
+ * Basic extraction costs 1 credit per 5 successful URLs and failures are free
+ * (docs.tavily.com/documentation/api-credits), so a batch never costs more than
+ * the same URLs extracted one at a time. */
+export async function extractPageTexts(urls: string[]): Promise<Map<string, string>> {
+  const chunks: string[][] = [];
+  for (let index = 0; index < urls.length; index += TAVILY_BATCH) {
+    chunks.push(urls.slice(index, index + TAVILY_BATCH));
+  }
+  // A full batch reads twenty pages, so it gets twice the single-page ceiling.
+  const batches = await Promise.all(
+    chunks.map(chunk => extractBatch(chunk, TAVILY_TIMEOUT_MS * 2))
+  );
+  const texts = new Map<string, string>();
+  for (const result of batches.flat()) {
+    const raw = rawContent(result);
+    if (raw && typeof result.url === "string") texts.set(result.url, raw);
+  }
+  return texts;
 }

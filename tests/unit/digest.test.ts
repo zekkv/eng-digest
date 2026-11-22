@@ -8,6 +8,7 @@ import {
   completeJson,
   extractJson,
   extractPageText,
+  extractPageTexts,
 } from "#/features/digest/clients.server";
 import {
   DEFAULT_MODEL,
@@ -1038,5 +1039,29 @@ describe("fetchCandidates", () => {
     expect(result.fetchedSources.map(source => source.name)).toEqual(["Fast"]);
     expect(result.feeds).toEqual([{ name: "Fast", ok: true, count: 1 }]);
     expect(result.articles.some(entry => entry.url === "https://feed.test/1")).toBe(true);
+  });
+});
+
+describe("batched extract", () => {
+  it("batches extracts at 20 urls and maps text by url", async () => {
+    const bodies: string[][] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: unknown, init?: { body?: string }) => {
+        const urls: string[] = JSON.parse(init?.body ?? "{}").urls;
+        bodies.push(urls);
+        // Tavily leaves failed pages out of results.
+        const results = urls
+          .filter(url => !url.endsWith("/3"))
+          .map(url => ({ url, raw_content: `text of ${url}` }));
+        return { ok: true, json: async () => ({ results }) };
+      })
+    );
+    const urls = Array.from({ length: 25 }, (_, index) => `https://x.test/${index}`);
+    const texts = await extractPageTexts(urls);
+    expect(bodies.map(batch => batch.length)).toEqual([20, 5]);
+    expect(texts.size).toBe(24);
+    expect(texts.get("https://x.test/7")).toBe("text of https://x.test/7");
+    expect(texts.has("https://x.test/3")).toBe(false);
   });
 });

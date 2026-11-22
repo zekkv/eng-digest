@@ -13,7 +13,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import { normalizeSummary, pickKey } from "#/features/digest/pipeline.server";
+import { candidateLine, normalizeSummary, pickKey } from "#/features/digest/pipeline.server";
 import {
   chat,
   factCoverage,
@@ -28,6 +28,7 @@ import {
   seededShuffle,
   usd,
 } from "./lib";
+import type { CandidateArticle } from "#/features/digest/types";
 import type { Call } from "./lib";
 import { SELECT_VARIANTS, SUMMARY_VARIANTS } from "./prompts";
 
@@ -37,14 +38,8 @@ const RESULTS = path.join(ROOT, "evals", "results");
 const CONCURRENCY = 4;
 const PICK_COUNT = 10;
 
-interface PoolCandidate {
-  url: string;
-  title: string;
-  blog: string;
-  blurb: string;
-  published: number;
-  source: string;
-}
+/** pools.json was frozen from real cache candidates, so it has the production shape. */
+type PoolCandidate = CandidateArticle;
 
 interface Pool {
   id: string;
@@ -150,6 +145,7 @@ function parseArgs(argv: string[]): {
   configs?: string[];
   repeats: number;
   judge: boolean;
+  excerpts: boolean;
 } {
   const [suite = "picker", ...rest] = argv;
   const flags = new Map<string, string>();
@@ -172,6 +168,7 @@ function parseArgs(argv: string[]): {
     configs: flags.get("configs")?.split(",").filter(Boolean),
     repeats: Number(flags.get("repeats") ?? 2),
     judge: flags.get("judge") !== "false",
+    excerpts: flags.has("excerpts"),
   };
 }
 
@@ -234,10 +231,49 @@ interface PickAttempt {
   valid: boolean;
 }
 
-function candidateListing(pool: Pool): string {
-  return pool.candidates
-    .map(item => `- ${item.url} | ${item.blog}: ${item.title} — ${item.blurb.slice(0, 180)}`)
+/** Page-text chars shown per candidate in the --excerpts comparison. */
+const EXCERPT_CHARS = 600;
+
+/** Tavily returns markdown that opens with nav, banners, and bylines. Start at the first
+ * prose paragraph instead, with link syntax reduced to its text. */
+function excerptOf(text: string): string {
+  const plain = text.replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+  const lines = plain.split("\n");
+  // ponytail: "first line of 200+ chars" is a heuristic; a readability pass is the upgrade.
+  const start = Math.max(
+    0,
+    lines.findIndex(line => line.trim().length >= 200)
+  );
+  return lines.slice(start).join(" ").replace(/\s+/g, " ").trim().slice(0, EXCERPT_CHARS);
+}
+
+/** The production picker listing, optionally with an excerpt under each candidate. */
+function candidateListing(
+  candidates: PoolCandidate[],
+  texts: ReadonlyMap<string, string> = new Map()
+): string {
+  return candidates
+    .map(item => {
+      const text = texts.get(item.url);
+      const excerpt = text ? excerptOf(text) : "";
+      return excerpt ? `${candidateLine(item)}\n  excerpt: ${excerpt}` : candidateLine(item);
+    })
     .join("\n");
+}
+
+/** Pool page texts for the excerpt comparison: one batched extract per pool, cached under
+ * the gitignored data/text/ folder so a rerun spends no Tavily credits. */
+async function poolTexts(pool: Pool): Promise<Map<string, string>> {
+  const file = path.join(DATA, "text", "pools", `${pool.id}.json`);
+  if (!existsSync(file)) {
+    const { extractPageTexts } = await import("#/features/digest/clients.server");
+    const texts = await extractPageTexts(pool.candidates.map(item => item.url));
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify(Object.fromEntries(texts)));
+    console.log(`extracted ${texts.size}/${pool.candidates.length} pages for ${pool.id}`);
+  }
+  const cached = z.record(z.string(), z.string()).parse(JSON.parse(readFileSync(file, "utf8")));
+  return new Map(Object.entries(cached));
 }
 
 function scorePicks(
@@ -298,17 +334,25 @@ function scorePicks(
 async function runPicker(
   configs: Config[],
   variants: typeof SELECT_VARIANTS,
-  repeats: number
+  repeats: number,
+  excerpts: boolean
 ): Promise<PickAttempt[]> {
+  // With --excerpts every job runs twice: titles only (production before) and with page text.
+  const textsByPool = new Map<string, Map<string, string>>();
+  // oxlint-disable-next-line no-await-in-loop -- one paid extract per pool, cached after
+  if (excerpts) for (const pool of pools) textsByPool.set(pool.id, await poolTexts(pool));
+  const listings = excerpts ? ["titles", "excerpts"] : ["titles"];
   const jobs = configs.flatMap(cfg =>
     variants.flatMap(variant =>
-      pools.flatMap(pool =>
-        Array.from({ length: repeats }, (_, repeat) => ({ cfg, variant, pool, repeat }))
+      listings.flatMap(listing =>
+        pools.flatMap(pool =>
+          Array.from({ length: repeats }, (_, repeat) => ({ cfg, variant, listing, pool, repeat }))
+        )
       )
     )
   );
   console.log(
-    `picker: ${configs.length} configs x ${variants.length} prompts x ${pools.length} pools x ${repeats} repeats = ${jobs.length} calls`
+    `picker: ${configs.length} configs x ${variants.length} prompts x ${listings.length} listings x ${pools.length} pools x ${repeats} repeats = ${jobs.length} calls`
   );
   let done = 0;
   const results = await mapLimit(jobs, CONCURRENCY, async job => {
@@ -319,7 +363,10 @@ async function runPicker(
         model: job.cfg.model,
         effort: job.cfg.effort,
         prompt,
-        text: candidateListing(job.pool),
+        text: candidateListing(
+          job.pool.candidates,
+          job.listing === "excerpts" ? textsByPool.get(job.pool.id) : undefined
+        ),
         temperature: 0.3,
       });
     } catch (error) {
@@ -336,7 +383,7 @@ async function runPicker(
     const raw = parsed.success ? (parsed.data.picked ?? []) : [];
     return {
       configId: job.cfg.id,
-      promptId: job.variant.id,
+      promptId: excerpts ? `${job.variant.id}+${job.listing}` : job.variant.id,
       poolId: job.pool.id,
       repeat: job.repeat,
       call,
@@ -703,7 +750,7 @@ async function main(): Promise<void> {
     const defaults = PICKER_SCREEN;
     const configs = selectConfigs(args.configs, defaults);
     const variants = args.stage === "prompts" ? SELECT_VARIANTS : [SELECT_VARIANTS[0]];
-    const rows = await runPicker(configs, variants, args.repeats);
+    const rows = await runPicker(configs, variants, args.repeats, args.excerpts);
     const body = [
       `# Picker eval (${args.stage})`,
       "",
