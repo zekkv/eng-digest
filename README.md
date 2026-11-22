@@ -1,6 +1,6 @@
 # eng-digest
 
-A daily digest of engineering blog posts with summaries, key points, and decoded jargon. The app uses TanStack Start on Bun. It collects posts from RSS feeds, sitemaps, HTML index pages, and the Hacker News front page. Tavily extracts the article text. An LLM picks the most interesting posts and summarizes them.
+A weekly digest of engineering blog posts with summaries, key points, and decoded jargon. The app uses TanStack Start on Bun. It collects posts from RSS feeds, sitemaps, HTML index pages, and the Hacker News front page. Tavily extracts the article text. An LLM picks the most interesting posts and summarizes them.
 
 The source list starts from seeds in `config.ts`. It grows from the posts that the picker likes and is stored in the cache. There is no relational database and no accounts. Locally, the cache is a JSON file under `data/`.
 

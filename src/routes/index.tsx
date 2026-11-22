@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "A daily digest of engineering blog posts with summaries, key points, and jargon decoded.",
+          "A weekly digest of engineering blog posts with summaries, key points, and jargon decoded.",
       },
     ],
   }),

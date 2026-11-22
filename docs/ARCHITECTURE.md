@@ -1,6 +1,6 @@
 # Architecture
 
-This app builds a daily engineering digest. It collects RSS/Atom feeds, sitemaps, and HTML index pages for blogs without feeds. It also collects the Hacker News front page. An LLM picks and summarizes the posts.
+This app builds a weekly engineering digest. It collects RSS/Atom feeds, sitemaps, and HTML index pages for blogs without feeds. It also collects the Hacker News front page. An LLM picks and summarizes the posts.
 
 The source list starts from seeds in `config.ts`. It grows from successful picks and is stored in the cache. The app renders on the server with TanStack Start and Nitro on Bun. There is no relational database and no authentication. Locally, the cache is a JSON file under `data/`.
 
