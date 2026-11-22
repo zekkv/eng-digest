@@ -28,6 +28,7 @@ import {
   seededShuffle,
   usd,
 } from "./lib";
+import { DEFAULT_PICK_COUNT } from "#/features/digest/config";
 import type { CandidateArticle } from "#/features/digest/types";
 import type { Call } from "./lib";
 import { SELECT_VARIANTS, SUMMARY_VARIANTS } from "./prompts";
@@ -36,7 +37,8 @@ const ROOT = path.resolve(import.meta.dir, "..");
 const DATA = path.join(ROOT, "evals", "data");
 const RESULTS = path.join(ROOT, "evals", "results");
 const CONCURRENCY = 4;
-const PICK_COUNT = 10;
+/** Score the same pick count the weekly job uses. */
+const PICK_COUNT = DEFAULT_PICK_COUNT;
 
 /** pools.json was frozen from real cache candidates, so it has the production shape. */
 type PoolCandidate = CandidateArticle;
@@ -200,6 +202,27 @@ function assertDataset(): void {
       throw new Error(`${pool.id}: more labels than candidates`);
     }
   }
+}
+
+/** --merge joins the pools pairwise into 80-candidate pools (their URLs are disjoint), to test
+ * a larger CANDIDATE_POOL without new labels. Candidates are ordered newest first, as in production. */
+function mergePools(): void {
+  const merged: Pool[] = [];
+  for (let index = 0; index + 1 < pools.length; index += 2) {
+    const [a, b] = [pools[index], pools[index + 1]];
+    const id = `${a.id}+${b.id}`;
+    const candidates = [...a.candidates, ...b.candidates].toSorted(
+      (x, y) => y.published - x.published
+    );
+    merged.push({ id, candidates });
+    const [la, lb] = [labels.pools[a.id], labels.pools[b.id]];
+    labels.pools[id] = {
+      picks: [...la.picks, ...lb.picks],
+      traps: [...la.traps, ...lb.traps],
+      topics: [...la.topics, ...lb.topics],
+    };
+  }
+  pools.splice(0, pools.length, ...merged);
 }
 
 function selectConfigs(requested: string[] | undefined, defaults: Config[]): Config[] {
@@ -698,7 +721,7 @@ function projectionTable(
 ): string {
   const keys = [...new Set(rows.map(row => `${row.configId} | ${row.promptId}`))];
   const lines = [
-    "| config | prompt | pick ms | pick $ | summary $ x10 | daily run $ |",
+    `| config | prompt | pick ms | pick $ | summary $ x${PICK_COUNT} | weekly run $ |`,
     "|---|---|---|---|---|---|",
   ];
   for (const key of keys) {
@@ -708,8 +731,8 @@ function projectionTable(
     const price = prices[model];
     const pickMs = p95(group.map(row => row.call.ms));
     const pickCost = mean(group.map(row => row.call.usage.cost));
-    // A daily run is one picker call plus ten summaries at ~3k in / 700 out tokens.
-    const summaryCost = price ? 10 * (3_000 * price.in + 700 * price.out) : 0;
+    // A weekly run is one picker call plus PICK_COUNT summaries at ~3k in / 700 out tokens.
+    const summaryCost = price ? PICK_COUNT * (3_000 * price.in + 700 * price.out) : 0;
     lines.push(
       `| ${configId} | ${key.split(" | ")[1]} | ${formatMs(pickMs)} | ${usd(pickCost)} | ${usd(summaryCost)} | ${usd(pickCost + summaryCost)} |`
     );
@@ -727,6 +750,7 @@ function writeReport(name: string, body: string, payload: unknown): string {
 
 async function main(): Promise<void> {
   assertDataset();
+  if (process.argv.includes("--merge")) mergePools();
   if (process.argv.includes("--extract-texts")) {
     const { extractPageText } = await import("#/features/digest/clients.server");
     for (const item of cases) {
@@ -761,6 +785,7 @@ async function main(): Promise<void> {
       projectionTable(rows, prices),
     ].join("\n");
     console.log(`\n${body}`);
+    console.log(`\nspent ${usd(rows.reduce((sum, row) => sum + row.call.usage.cost, 0))}`);
     const base = writeReport(`picker-${args.stage}`, body, { args, rows });
     console.log(`\nwrote ${base}.json`);
     return;

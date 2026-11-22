@@ -322,7 +322,7 @@ describe("selectInteresting", () => {
       seen.push(options);
       return Promise.resolve({ picked: ["u1"] });
     });
-    expect(seen[0]).toEqual({ model: "anthropic/claude-haiku-5.5", effort: "low" });
+    expect(seen[0]).toEqual({ model: "deepseek/deepseek-v4.1-flash-1017", effort: "low" });
   });
 
   it("tops up with the newest remaining when the picker matches fewer than n", async () => {
