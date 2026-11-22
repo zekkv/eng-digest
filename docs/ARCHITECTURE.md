@@ -19,7 +19,7 @@ The source list starts from seeds in `config.ts`. It grows from successful picks
 │   └── workflows/
 │       ├── ci.yml            # Checks, then deploys same-repository previews
 │       ├── cd.yml            # Deploys after CI succeeds on `main`, or by manual dispatch
-│       └── digest-daily.yml  # Runs `bun run digest:daily` at 07:00 SGT (23:00 UTC)
+│       └── digest-daily.yml  # Runs `bun run digest:daily` Mondays at 07:00 SGT (Sunday 23:00 UTC)
 ├── docs/
 │   ├── ARCHITECTURE.md   # This file
 │   ├── DEPLOYMENT.md     # Vercel and GitHub Actions deployment
@@ -67,7 +67,7 @@ The Upstash cache uses the same self-healing rules as the filesystem cache. A ma
 
 If `VERCEL=1` is set and the Upstash variables are missing, the app stops with a clear configuration error. The filesystem cache is short-lived on each Vercel instance.
 
-Normal page loads (`loadDigest(false)`) read the cached digest and do not refresh feeds. Manual refreshes (`loadDigest(true)`) and on-demand summaries (`summarizeArticle`) still work. The daily job runs from `.github/workflows/digest-daily.yml` at 07:00 Singapore time (23:00 UTC). It uses Upstash Redis directly and does not use a Vercel Cron HTTP endpoint.
+Normal page loads (`loadDigest(false)`) read the cached digest and do not refresh feeds. Manual refreshes (`loadDigest(true)`) and on-demand summaries (`summarizeArticle`) still work. The weekly job runs from `.github/workflows/digest-daily.yml` every Monday at 07:00 Singapore time (Sunday 23:00 UTC). It uses Upstash Redis directly and does not use a Vercel Cron HTTP endpoint.
 
 ## Styling
 

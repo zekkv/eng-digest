@@ -44,7 +44,7 @@ bun scripts/digest-daily.ts --dry-run   # source configuration check, writes not
 bun run digest:daily                    # daily job (also accepts --force)
 ```
 
-In production, `.github/workflows/digest-daily.yml` runs `bun run digest:daily` every day at **07:00 Singapore time (SGT), 23:00 UTC**. The workflow also supports manual `workflow_dispatch` with an optional `force` input. The job writes directly to Upstash Redis. It does not send a request to the Vercel web app. A successful run marks the day as complete, and the script does not run again that day unless you pass `--force`. A run that has articles to summarize but no successful summary does not mark the day as complete, so the next run retries.
+In production, `.github/workflows/digest-daily.yml` runs `bun run digest:daily` every Monday at **07:00 Singapore time (SGT), Sunday 23:00 UTC**. The workflow also supports manual `workflow_dispatch` with an optional `force` input. The job writes directly to Upstash Redis. It does not send a request to the Vercel web app. A successful run marks the day as complete, and the script does not run again that day unless you pass `--force`. A run that has articles to summarize but no successful summary does not mark the day as complete, so the next run retries.
 
 A source refresh fetches only the tracked sources and the Hacker News front page. It spends no API credits. On-demand summaries spend Tavily and OpenRouter credits, with a fixed per-day budget (50). The app allows one forced refresh per 10 minutes. A forced refresh stops after 6 seconds. The daily job completes the full sweep.
 
