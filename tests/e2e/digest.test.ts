@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Engineering digest", () => {
-  test("shows today's picks and either articles or the empty state", async ({ page }) => {
+  test("shows this week's picks and either articles or the empty state", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /today's picks/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /this week's picks/i })).toBeVisible();
     const articlesRegion = page.getByRole("region", { name: /articles/i });
     const emptyState = page.getByRole("heading", { name: /nothing on the desk yet/i });
     await expect(articlesRegion.or(emptyState)).toBeVisible();

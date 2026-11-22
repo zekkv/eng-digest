@@ -216,7 +216,7 @@ export function DigestPage({ data }: { data: DigestPayload }) {
       <header>
         <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
           <h1 className="font-heading text-3xl font-semibold tracking-tight">
-            Today&apos;s picks{picks.length > 0 && ` (${picks.length})`}
+            This week&apos;s picks{picks.length > 0 && ` (${picks.length})`}
           </h1>
           {/* Relative time can change between SSR and hydration. The mismatch is cosmetic only. */}
           <p suppressHydrationWarning className="font-notes text-sm text-soft tabular-nums">
@@ -258,7 +258,7 @@ export function DigestPage({ data }: { data: DigestPayload }) {
                   : "rounded px-3 py-1 text-sm text-soft transition-colors duration-150 hover:text-proof"
               }
             >
-              {value === "today" ? "Today" : "All"}
+              {value === "today" ? "This week" : "All"}
             </button>
           ))}
         </fieldset>
@@ -300,7 +300,7 @@ export function DigestPage({ data }: { data: DigestPayload }) {
           >
             {scope === "today" && picks.length === 0 ? (
               <div className="border border-proof/15 p-6">
-                <p className="font-heading text-lg font-semibold">No picks yet today</p>
+                <p className="font-heading text-lg font-semibold">No picks yet this week</p>
                 <p className="mt-2 text-sm leading-relaxed text-soft">
                   The morning scan hasn&apos;t chosen anything. Browse everything instead.
                 </p>
@@ -821,7 +821,9 @@ export function DigestPageSkeleton() {
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6" aria-busy="true">
       <output className="sr-only">Loading digest</output>
       <header className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <h1 className="font-heading text-3xl font-semibold tracking-tight">Today&apos;s picks</h1>
+        <h1 className="font-heading text-3xl font-semibold tracking-tight">
+          This week&apos;s picks
+        </h1>
         <Skeleton className="h-5 w-56" />
         <div className="ml-auto flex items-center gap-2">
           <Skeleton className="h-8 w-24" />

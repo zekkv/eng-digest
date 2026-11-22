@@ -191,7 +191,7 @@ describe("DigestPage", () => {
     expect(document.activeElement).toBe(second);
   });
 
-  it("filters Today picks versus All posts", async () => {
+  it("filters This week picks versus All posts", async () => {
     const user = userEvent.setup();
     renderPage(
       payload([
