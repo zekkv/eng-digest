@@ -1,8 +1,8 @@
 # Deployment
 
-## Vercel Hobby + GitHub Actions daily cron
+## Vercel Hobby + GitHub Actions weekly cron
 
-Local runs (`bun run dev` and `bun run digest:daily`) keep using `data/cache.json`. The steps below do not change them. On Vercel, the web app reads the cached digest from Upstash Redis on page load. Manual refreshes and on-demand article summaries write back to Redis. The daily job runs in GitHub Actions (`.github/workflows/digest-daily.yml`) at **07:00 Singapore time (23:00 UTC)**. It writes directly to the same Upstash Redis store.
+Local runs (`bun run dev` and `bun run digest:daily`) keep using `data/cache.json`. The steps below do not change them. On Vercel, the web app reads the cached digest from Upstash Redis on page load. Manual refreshes and on-demand article summaries write back to Redis. The daily job runs in GitHub Actions (`.github/workflows/digest-daily.yml`) every Monday at **07:00 Singapore time (Sunday 23:00 UTC)**. It writes directly to the same Upstash Redis store.
 
 1. Run `bunx vercel login`. Then run `bunx vercel link` in the repository root.
 2. Install Upstash Redis from the Vercel Marketplace. It sets `KV_REST_API_URL` and `KV_REST_API_TOKEN` for the project. The Upstash names `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` also work. You can also set the `UPSTASH_*` pair manually.

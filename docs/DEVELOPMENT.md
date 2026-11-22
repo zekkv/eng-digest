@@ -37,7 +37,7 @@ This guide covers the local development environment, scripts catalog, environmen
    bun scripts/digest-daily.ts --dry-run
    ```
 
-5. **Run the daily job**. Production runs it from `.github/workflows/digest-daily.yml` at 07:00 Singapore time (SGT), 23:00 UTC. To run it locally, use the following command. Append `--force` to run it again today:
+5. **Run the daily job**. Production runs it from `.github/workflows/digest-daily.yml` every Monday at 07:00 Singapore time (SGT), Sunday 23:00 UTC. To run it locally, use the following command. Append `--force` to run it again today:
 
    ```bash
    bun run digest:daily
@@ -47,16 +47,16 @@ This guide covers the local development environment, scripts catalog, environmen
 
 ## Environment Variables
 
-| Variable             | Required                | Description                                                                          |
-| -------------------- | ----------------------- | ------------------------------------------------------------------------------------ |
-| `OPENROUTER_API_KEY` | ✅                      | Powers the LLM calls that pick and summarize.                                        |
-| `TAVILY_API_KEY`     | ✅                      | Extracts article text for summaries.                                                 |
-| `DIGEST_MODEL`       | Optional                | Overrides the summariser model. The default is `meta/muse-spark-1.3-contributor`.    |
-| `DIGEST_PICK_MODEL`  | Optional                | Overrides the picker model. The default is `anthropic/claude-haiku-5.5`.             |
-| `DIGEST_PICK_COUNT`  | Optional                | Overrides the number of candidate articles that the daily run picks (default: `10`). |
-| `DIGEST_DNS_CHECK`   | Optional                | Set to `0` to skip DNS checks on fetched hosts. Unit tests set it to `0`.            |
-| `KV_REST_API_URL`    | Vercel / GitHub Actions | Upstash Redis REST endpoint for cloud persistence (or `UPSTASH_REDIS_REST_URL`).     |
-| `KV_REST_API_TOKEN`  | Vercel / GitHub Actions | Upstash Redis REST token for cloud persistence (or `UPSTASH_REDIS_REST_TOKEN`).      |
+| Variable             | Required                | Description                                                                           |
+| -------------------- | ----------------------- | ------------------------------------------------------------------------------------- |
+| `OPENROUTER_API_KEY` | ✅                      | Powers the LLM calls that pick and summarize.                                         |
+| `TAVILY_API_KEY`     | ✅                      | Extracts article text for summaries.                                                  |
+| `DIGEST_MODEL`       | Optional                | Overrides the summariser model. The default is `meta/muse-spark-1.3-contributor`.     |
+| `DIGEST_PICK_MODEL`  | Optional                | Overrides the picker model. The default is `anthropic/claude-haiku-5.5`.              |
+| `DIGEST_PICK_COUNT`  | Optional                | Overrides the number of candidate articles that the weekly run picks (default: `15`). |
+| `DIGEST_DNS_CHECK`   | Optional                | Set to `0` to skip DNS checks on fetched hosts. Unit tests set it to `0`.             |
+| `KV_REST_API_URL`    | Vercel / GitHub Actions | Upstash Redis REST endpoint for cloud persistence (or `UPSTASH_REDIS_REST_URL`).      |
+| `KV_REST_API_TOKEN`  | Vercel / GitHub Actions | Upstash Redis REST token for cloud persistence (or `UPSTASH_REDIS_REST_TOKEN`).       |
 
 In local development, the app uses the filesystem cache at `data/cache.json`. On Vercel, the app uses Upstash Redis. The daily digest job also uses Upstash Redis, so both share the same cloud cache. Refer to `.env.example` for templates.
 

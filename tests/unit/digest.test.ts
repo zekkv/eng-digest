@@ -495,9 +495,9 @@ describe("server function validators", () => {
 
 describe("daily helpers", () => {
   it("resolves the pick count with a default of 10", () => {
-    expect(resolvePickCount(undefined)).toBe(10);
+    expect(resolvePickCount(undefined)).toBe(15);
     expect(resolvePickCount("5")).toBe(5);
-    expect(resolvePickCount("abc")).toBe(10);
+    expect(resolvePickCount("abc")).toBe(15);
     expect(resolvePickCount("0")).toBe(1);
   });
 

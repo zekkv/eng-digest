@@ -151,7 +151,7 @@ export const FEED_BATCH = 12;
 /** Newest unsummarized posts shown to the picker (bounds prompt size). */
 export const CANDIDATE_POOL = 40;
 /** Posts summarized per daily run; env override DIGEST_PICK_COUNT. */
-export const DEFAULT_PICK_COUNT = 10;
+export const DEFAULT_PICK_COUNT = 15;
 /** Newest articles kept in the cache. */
 export const KEEP_ARTICLES = 200;
 /** Page text chars sent to the summarizer. */
