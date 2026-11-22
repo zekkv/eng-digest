@@ -52,7 +52,7 @@ This guide covers the local development environment, scripts catalog, environmen
 | `OPENROUTER_API_KEY` | ✅                      | Powers the LLM calls that pick and summarize.                                         |
 | `TAVILY_API_KEY`     | ✅                      | Extracts article text for summaries.                                                  |
 | `DIGEST_MODEL`       | Optional                | Overrides the summariser model. The default is `meta/muse-spark-1.3-contributor`.     |
-| `DIGEST_PICK_MODEL`  | Optional                | Overrides the picker model. The default is `anthropic/claude-haiku-5.5`.              |
+| `DIGEST_PICK_MODEL`  | Optional                | Overrides the picker model. The default is `deepseek/deepseek-v4.1-flash-1017`.       |
 | `DIGEST_PICK_COUNT`  | Optional                | Overrides the number of candidate articles that the weekly run picks (default: `15`). |
 | `DIGEST_DNS_CHECK`   | Optional                | Set to `0` to skip DNS checks on fetched hosts. Unit tests set it to `0`.             |
 | `KV_REST_API_URL`    | Vercel / GitHub Actions | Upstash Redis REST endpoint for cloud persistence (or `UPSTASH_REDIS_REST_URL`).      |
@@ -128,7 +128,11 @@ bun run eval picker --stage prompts --configs "anthropic/claude-haiku-5.5#low" -
 bun run eval summary --stage screen
 bun run eval summary --stage prompts --configs "..." --judge false
 bun run eval --extract-texts   # re-fetch the six article bodies (gitignored)
+bun run eval picker --merge --configs "..."     # pools joined pairwise into 80 candidates
+bun run eval picker --excerpts --configs "..."  # titles vs titles + page excerpt
 ```
+
+The picker eval scores `DEFAULT_PICK_COUNT` picks. `--excerpts` extracts each pool's pages once with Tavily and caches them in `evals/data/text/pools/`.
 
 Article bodies are not committed. `--extract-texts` refills `evals/data/text/` from the frozen URLs with Tavily.
 
@@ -184,6 +188,21 @@ Three findings came from the eval rather than the models:
 - The picker silently lost picks when a model rewrote a URL (`www.` stripped, `utm_*` dropped). `selectInteresting` now matches on `pickKey` and keeps the candidate's own URL.
 - The `select-score-strict` variant, which added more prohibitions, scored worse than the simpler scoring prompt. More rules is not automatically better.
 - The longer summary prompt lost to the short one on the same principle: it produced format violations (7-point lists, "The author..." openers) in 17% of summaries.
+
+### Results (2026-11-22): weekly runs, 15 picks
+
+With 15 picks from a 40-post pool, every model scored about 0.3 utility. The cause was the pool, not the models: each frozen pool holds only 10-11 gold posts, so 15 picks force at least four traps or neutral posts. `--merge` joins the pools into two 80-post pools (about 21 gold each):
+
+| picker model (low effort) | 40-post pool | 80-post pool    | trap rate (80) | p50 (80) | $/pick  |
+| ------------------------- | ------------ | --------------- | -------------- | -------- | ------- |
+| deepseek-v4.1-flash-1017  | 0.30         | **0.77 / 0.84** | **0.03-0.07**  | 30-39s   | $0.0031 |
+| claude-haiku-5.5          | 0.28         | 0.67 / 0.67     | 0.09-0.10      | 9s       | $0.0019 |
+| gpt-6-luna                | 0.27         | 0.58            | 0.15           | 9s       | $0.0008 |
+| mimo-v2.6-flash           | 0.32         | 0.53            | 0.20           | 13s      | $0.0014 |
+
+80-post cells are two runs (4 and 6 samples); the 40-post column is one 4-sample screen. Also screened at 40 and dropped: gpt-6-luna-pro (0.20), inkling-2-mini (0.23), muse-ember (0.20), minimax-m3.1-flash (0.17), qwen3.8-omni-flash (0.22). tencent/hy4-flash spent its whole 8,000-token budget reasoning and returned nothing. `CANDIDATE_POOL` is now 80 and the picker is deepseek-v4.1-flash-1017. That model is also the summary judge, but the picker eval is scored against fixed labels, not the judge.
+
+Page excerpts did not help the picker: haiku scored 0.52 with the first paragraph of each page against 0.60 with titles only (10 picks, 40-post pools). The labels were written from titles, so this eval cannot fully rule excerpts out.
 
 ---
 

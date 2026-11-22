@@ -152,6 +152,18 @@ describe("daily summary budget", () => {
     expect(fresh.tldr).toBe("ok");
     expect(fetch).toHaveBeenCalled();
   });
+
+  it("summarizes passed-in page text without a second extract", async () => {
+    const url = "https://example.com/batched";
+    state.cache = { ...state.cache, articles: [cachedArticle(url)], summaries: {} };
+    const fetch = stubPaidFetch();
+
+    const summary = await summarizeArticle(url, { ignoreBudget: true, text: "one two three" });
+    expect(summary.words).toBe(3);
+    const called = fetch.mock.calls.map(([input]) => (typeof input === "string" ? input : ""));
+    expect(called.some(input => input.includes("/extract"))).toBe(false);
+    expect(called.length).toBeGreaterThan(0);
+  });
 });
 
 describe("forced refresh cooldown", () => {

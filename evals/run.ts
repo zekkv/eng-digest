@@ -13,7 +13,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { z } from "zod";
-import { normalizeSummary, pickKey } from "#/features/digest/pipeline.server";
+import { candidateLine, normalizeSummary, pickKey } from "#/features/digest/pipeline.server";
 import {
   chat,
   factCoverage,
@@ -28,6 +28,8 @@ import {
   seededShuffle,
   usd,
 } from "./lib";
+import { DEFAULT_PICK_COUNT } from "#/features/digest/config";
+import type { CandidateArticle } from "#/features/digest/types";
 import type { Call } from "./lib";
 import { SELECT_VARIANTS, SUMMARY_VARIANTS } from "./prompts";
 
@@ -35,16 +37,11 @@ const ROOT = path.resolve(import.meta.dir, "..");
 const DATA = path.join(ROOT, "evals", "data");
 const RESULTS = path.join(ROOT, "evals", "results");
 const CONCURRENCY = 4;
-const PICK_COUNT = 10;
+/** Score the same pick count the weekly job uses. */
+const PICK_COUNT = DEFAULT_PICK_COUNT;
 
-interface PoolCandidate {
-  url: string;
-  title: string;
-  blog: string;
-  blurb: string;
-  published: number;
-  source: string;
-}
+/** pools.json was frozen from real cache candidates, so it has the production shape. */
+type PoolCandidate = CandidateArticle;
 
 interface Pool {
   id: string;
@@ -150,6 +147,7 @@ function parseArgs(argv: string[]): {
   configs?: string[];
   repeats: number;
   judge: boolean;
+  excerpts: boolean;
 } {
   const [suite = "picker", ...rest] = argv;
   const flags = new Map<string, string>();
@@ -172,6 +170,7 @@ function parseArgs(argv: string[]): {
     configs: flags.get("configs")?.split(",").filter(Boolean),
     repeats: Number(flags.get("repeats") ?? 2),
     judge: flags.get("judge") !== "false",
+    excerpts: flags.has("excerpts"),
   };
 }
 
@@ -205,6 +204,27 @@ function assertDataset(): void {
   }
 }
 
+/** --merge joins the pools pairwise into 80-candidate pools (their URLs are disjoint), to test
+ * a larger CANDIDATE_POOL without new labels. Candidates are ordered newest first, as in production. */
+function mergePools(): void {
+  const merged: Pool[] = [];
+  for (let index = 0; index + 1 < pools.length; index += 2) {
+    const [a, b] = [pools[index], pools[index + 1]];
+    const id = `${a.id}+${b.id}`;
+    const candidates = [...a.candidates, ...b.candidates].toSorted(
+      (x, y) => y.published - x.published
+    );
+    merged.push({ id, candidates });
+    const [la, lb] = [labels.pools[a.id], labels.pools[b.id]];
+    labels.pools[id] = {
+      picks: [...la.picks, ...lb.picks],
+      traps: [...la.traps, ...lb.traps],
+      topics: [...la.topics, ...lb.topics],
+    };
+  }
+  pools.splice(0, pools.length, ...merged);
+}
+
 function selectConfigs(requested: string[] | undefined, defaults: Config[]): Config[] {
   if (!requested) return defaults;
   return requested.map(id => {
@@ -234,10 +254,49 @@ interface PickAttempt {
   valid: boolean;
 }
 
-function candidateListing(pool: Pool): string {
-  return pool.candidates
-    .map(item => `- ${item.url} | ${item.blog}: ${item.title} — ${item.blurb.slice(0, 180)}`)
+/** Page-text chars shown per candidate in the --excerpts comparison. */
+const EXCERPT_CHARS = 600;
+
+/** Tavily returns markdown that opens with nav, banners, and bylines. Start at the first
+ * prose paragraph instead, with link syntax reduced to its text. */
+function excerptOf(text: string): string {
+  const plain = text.replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1");
+  const lines = plain.split("\n");
+  // ponytail: "first line of 200+ chars" is a heuristic; a readability pass is the upgrade.
+  const start = Math.max(
+    0,
+    lines.findIndex(line => line.trim().length >= 200)
+  );
+  return lines.slice(start).join(" ").replace(/\s+/g, " ").trim().slice(0, EXCERPT_CHARS);
+}
+
+/** The production picker listing, optionally with an excerpt under each candidate. */
+function candidateListing(
+  candidates: PoolCandidate[],
+  texts: ReadonlyMap<string, string> = new Map()
+): string {
+  return candidates
+    .map(item => {
+      const text = texts.get(item.url);
+      const excerpt = text ? excerptOf(text) : "";
+      return excerpt ? `${candidateLine(item)}\n  excerpt: ${excerpt}` : candidateLine(item);
+    })
     .join("\n");
+}
+
+/** Pool page texts for the excerpt comparison: one batched extract per pool, cached under
+ * the gitignored data/text/ folder so a rerun spends no Tavily credits. */
+async function poolTexts(pool: Pool): Promise<Map<string, string>> {
+  const file = path.join(DATA, "text", "pools", `${pool.id}.json`);
+  if (!existsSync(file)) {
+    const { extractPageTexts } = await import("#/features/digest/clients.server");
+    const texts = await extractPageTexts(pool.candidates.map(item => item.url));
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(file, JSON.stringify(Object.fromEntries(texts)));
+    console.log(`extracted ${texts.size}/${pool.candidates.length} pages for ${pool.id}`);
+  }
+  const cached = z.record(z.string(), z.string()).parse(JSON.parse(readFileSync(file, "utf8")));
+  return new Map(Object.entries(cached));
 }
 
 function scorePicks(
@@ -298,17 +357,25 @@ function scorePicks(
 async function runPicker(
   configs: Config[],
   variants: typeof SELECT_VARIANTS,
-  repeats: number
+  repeats: number,
+  excerpts: boolean
 ): Promise<PickAttempt[]> {
+  // With --excerpts every job runs twice: titles only (production before) and with page text.
+  const textsByPool = new Map<string, Map<string, string>>();
+  // oxlint-disable-next-line no-await-in-loop -- one paid extract per pool, cached after
+  if (excerpts) for (const pool of pools) textsByPool.set(pool.id, await poolTexts(pool));
+  const listings = excerpts ? ["titles", "excerpts"] : ["titles"];
   const jobs = configs.flatMap(cfg =>
     variants.flatMap(variant =>
-      pools.flatMap(pool =>
-        Array.from({ length: repeats }, (_, repeat) => ({ cfg, variant, pool, repeat }))
+      listings.flatMap(listing =>
+        pools.flatMap(pool =>
+          Array.from({ length: repeats }, (_, repeat) => ({ cfg, variant, listing, pool, repeat }))
+        )
       )
     )
   );
   console.log(
-    `picker: ${configs.length} configs x ${variants.length} prompts x ${pools.length} pools x ${repeats} repeats = ${jobs.length} calls`
+    `picker: ${configs.length} configs x ${variants.length} prompts x ${listings.length} listings x ${pools.length} pools x ${repeats} repeats = ${jobs.length} calls`
   );
   let done = 0;
   const results = await mapLimit(jobs, CONCURRENCY, async job => {
@@ -319,7 +386,10 @@ async function runPicker(
         model: job.cfg.model,
         effort: job.cfg.effort,
         prompt,
-        text: candidateListing(job.pool),
+        text: candidateListing(
+          job.pool.candidates,
+          job.listing === "excerpts" ? textsByPool.get(job.pool.id) : undefined
+        ),
         temperature: 0.3,
       });
     } catch (error) {
@@ -336,7 +406,7 @@ async function runPicker(
     const raw = parsed.success ? (parsed.data.picked ?? []) : [];
     return {
       configId: job.cfg.id,
-      promptId: job.variant.id,
+      promptId: excerpts ? `${job.variant.id}+${job.listing}` : job.variant.id,
       poolId: job.pool.id,
       repeat: job.repeat,
       call,
@@ -651,7 +721,7 @@ function projectionTable(
 ): string {
   const keys = [...new Set(rows.map(row => `${row.configId} | ${row.promptId}`))];
   const lines = [
-    "| config | prompt | pick ms | pick $ | summary $ x10 | daily run $ |",
+    `| config | prompt | pick ms | pick $ | summary $ x${PICK_COUNT} | weekly run $ |`,
     "|---|---|---|---|---|---|",
   ];
   for (const key of keys) {
@@ -661,8 +731,8 @@ function projectionTable(
     const price = prices[model];
     const pickMs = p95(group.map(row => row.call.ms));
     const pickCost = mean(group.map(row => row.call.usage.cost));
-    // A daily run is one picker call plus ten summaries at ~3k in / 700 out tokens.
-    const summaryCost = price ? 10 * (3_000 * price.in + 700 * price.out) : 0;
+    // A weekly run is one picker call plus PICK_COUNT summaries at ~3k in / 700 out tokens.
+    const summaryCost = price ? PICK_COUNT * (3_000 * price.in + 700 * price.out) : 0;
     lines.push(
       `| ${configId} | ${key.split(" | ")[1]} | ${formatMs(pickMs)} | ${usd(pickCost)} | ${usd(summaryCost)} | ${usd(pickCost + summaryCost)} |`
     );
@@ -680,6 +750,7 @@ function writeReport(name: string, body: string, payload: unknown): string {
 
 async function main(): Promise<void> {
   assertDataset();
+  if (process.argv.includes("--merge")) mergePools();
   if (process.argv.includes("--extract-texts")) {
     const { extractPageText } = await import("#/features/digest/clients.server");
     for (const item of cases) {
@@ -703,7 +774,7 @@ async function main(): Promise<void> {
     const defaults = PICKER_SCREEN;
     const configs = selectConfigs(args.configs, defaults);
     const variants = args.stage === "prompts" ? SELECT_VARIANTS : [SELECT_VARIANTS[0]];
-    const rows = await runPicker(configs, variants, args.repeats);
+    const rows = await runPicker(configs, variants, args.repeats, args.excerpts);
     const body = [
       `# Picker eval (${args.stage})`,
       "",
@@ -714,6 +785,7 @@ async function main(): Promise<void> {
       projectionTable(rows, prices),
     ].join("\n");
     console.log(`\n${body}`);
+    console.log(`\nspent ${usd(rows.reduce((sum, row) => sum + row.call.usage.cost, 0))}`);
     const base = writeReport(`picker-${args.stage}`, body, { args, rows });
     console.log(`\nwrote ${base}.json`);
     return;

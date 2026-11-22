@@ -148,8 +148,9 @@ export const BLOCKED_HOSTS: string[] = [
 export const MAX_PER_FEED = 15;
 /** Sources fetched per wave: bounds concurrency so slow sources do not queue behind connection limits. */
 export const FEED_BATCH = 12;
-/** Newest unsummarized posts shown to the picker (bounds prompt size). */
-export const CANDIDATE_POOL = 40;
+/** Newest unsummarized posts shown to the picker (bounds prompt size). A 40-post pool holds
+ * only ~10 posts worth reading, so 15 picks forced traps (utility ~0.3); 80 lifts it to 0.67-0.84. */
+export const CANDIDATE_POOL = 80;
 /** Posts summarized per daily run; env override DIGEST_PICK_COUNT. */
 export const DEFAULT_PICK_COUNT = 15;
 /** Newest articles kept in the cache. */
@@ -173,9 +174,10 @@ export const MANUAL_SOURCE_TIMEOUT_MS = 2_500;
 export const BLURB_CHARS = 280;
 
 export const DEFAULT_MODEL = "meta/muse-spark-1.3-contributor";
-/** The picker is a judgement task: a faster model scores better than the summariser on
- * the same candidate pools, and extra reasoning effort makes it worse. */
-export const DEFAULT_PICK_MODEL = "anthropic/claude-haiku-5.5";
+/** The picker is a judgement task, and extra reasoning effort makes it worse. On 80-post pools
+ * with 15 picks this model scored 0.84 utility (3% traps) against haiku-5.5's 0.67 (9%). It takes
+ * ~40s per pick, which a weekly job can afford. */
+export const DEFAULT_PICK_MODEL = "deepseek/deepseek-v4.1-flash-1017";
 /** Cloud LLMs answer in seconds; 300s is a generous ceiling, not a target. */
 export const LLM_TIMEOUT_MS = 300_000;
 export const LLM_MAX_TOKENS = 8000; // reasoning models think before answering; leave budget for the JSON
